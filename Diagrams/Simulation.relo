@@ -1,0 +1,514 @@
+@prefix atxa-rse-eclipse: <http://www.architexa.com/rdf/rse-eclipse#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix atxa-jdt-wkspc: <http://www.architexa.com/rdf/jdt-wkspc#> .
+@prefix atxa-core: <http://www.architexa.com/rdf/core#> .
+@prefix atxa: <http://www.architexa.com/rdf/> .
+@prefix atxa-jdt: <http://www.architexa.com/rdf/jdt#> .
+
+<http://www.architexa.com/rdf/rse-eclipse#Diagrams_slSimulation.relo> a atxa-core:reloFile .
+
+atxa-core:docRoot atxa-core:browseModel "com.architexa.diagrams.relo.jdt/com.architexa.diagrams.relo.jdt.browse.ClassStrucBrowseModel" ;
+	atxa-core:contains _:node163frqcjnx5290 .
+
+_:node163frqcjnx5290 a atxa-core:node ;
+	atxa-core:model atxa-jdt-wkspc:sim ;
+	atxa-core:posX "85" ;
+	atxa-core:posY "169" .
+
+atxa-jdt-wkspc:sim atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor> .
+
+_:node163frqcjnx5290 atxa-core:contains _:node163frqcjnx5295 .
+
+_:node163frqcjnx5295 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor> ;
+	atxa-core:posX "91" ;
+	atxa-core:posY "297" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$SendPeriodicMeasures> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.id> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.neighbourhood> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.role> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$SendPeriodicFabricatedMessage> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$MainCycle> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.groups> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.status> .
+
+_:node163frqcjnx23 a atxa-core:link ;
+	atxa-core:model atxa-jdt:inherits ;
+	rdf:subject _:node163frqcjnx5295 ;
+	rdf:object _:node163frqcjnx5296 ;
+	atxa-core:bendpoint _:node163frqcjnx7517 .
+
+_:node163frqcjnx7517 atxa-core:bpLocation "205,321" ;
+	atxa-core:bpIndex "0" .
+
+_:node163frqcjnx23 atxa-core:bendpoint _:node163frqcjnx7518 .
+
+_:node163frqcjnx7518 atxa-core:bpLocation "-5,321" ;
+	atxa-core:bpIndex "1" .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5299 .
+
+_:node163frqcjnx5299 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.id> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "319" .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5300 .
+
+_:node163frqcjnx5300 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.groups> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "335" .
+
+_:node163frqcjnx303 a atxa-core:link ;
+	atxa-core:model atxa-jdt:refType ;
+	rdf:subject _:node163frqcjnx5300 ;
+	rdf:object _:node163frqcjnx5301 .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5302 .
+
+_:node163frqcjnx5302 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.role> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "351" .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5303 .
+
+_:node163frqcjnx5303 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.neighbourhood> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "367" .
+
+_:node163frqcjnx81 a atxa-core:link ;
+	atxa-core:model atxa-jdt:refType ;
+	rdf:subject _:node163frqcjnx5303 ;
+	rdf:object _:node163frqcjnx5304 .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5305 .
+
+_:node163frqcjnx5305 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor.status> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "383" .
+
+_:node163frqcjnx217 a atxa-core:link ;
+	atxa-core:model atxa-jdt:refType ;
+	rdf:subject _:node163frqcjnx5305 ;
+	rdf:object _:node163frqcjnx5306 .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5306 .
+
+_:node163frqcjnx5306 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "399" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.Status(Sensor,)> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.authorization> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.promiscuousMode> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.drop()> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.nofwd> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.dropProb> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.useTrust> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.fabricator> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.modifier> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.this$0> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.isMalicious()> .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5307 .
+
+_:node163frqcjnx5307 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.authorization> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "421" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5308 .
+
+_:node163frqcjnx5308 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.fabricator> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "437" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5309 .
+
+_:node163frqcjnx5309 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.this$0> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "453" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5310 .
+
+_:node163frqcjnx5310 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.drop()> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "549" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5311 .
+
+_:node163frqcjnx5311 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.dropProb> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "469" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5312 .
+
+_:node163frqcjnx5312 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.isMalicious()> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "565" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5313 .
+
+_:node163frqcjnx5313 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.modifier> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "485" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5314 .
+
+_:node163frqcjnx5314 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.nofwd> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "501" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5315 .
+
+_:node163frqcjnx5315 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.promiscuousMode> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "517" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5316 .
+
+_:node163frqcjnx5316 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.Status(Sensor,)> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "581" .
+
+_:node163frqcjnx5306 atxa-core:contains _:node163frqcjnx5317 .
+
+_:node163frqcjnx5317 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$Status.useTrust> ;
+	atxa-core:posX "93" ;
+	atxa-core:posY "533" .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5318 .
+
+_:node163frqcjnx5318 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$MainCycle> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "603" .
+
+_:node163frqcjnx3570 a atxa-core:link ;
+	atxa-core:model atxa-jdt:inherits ;
+	rdf:subject _:node163frqcjnx5318 ;
+	rdf:object _:node163frqcjnx5319 ;
+	atxa-core:bendpoint _:node163frqcjnx7519 .
+
+_:node163frqcjnx7519 atxa-core:bpLocation "202,631" ;
+	atxa-core:bpIndex "0" .
+
+_:node163frqcjnx3570 atxa-core:bendpoint _:node163frqcjnx7520 .
+
+_:node163frqcjnx7520 atxa-core:bpLocation "-10,631" ;
+	atxa-core:bpIndex "1" .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5322 .
+
+_:node163frqcjnx5322 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$SendPeriodicMeasures> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "631" .
+
+_:node163frqcjnx4051 a atxa-core:link ;
+	atxa-core:model atxa-jdt:inherits ;
+	rdf:subject _:node163frqcjnx5322 ;
+	rdf:object _:node163frqcjnx5323 ;
+	atxa-core:bendpoint _:node163frqcjnx7521 .
+
+_:node163frqcjnx7521 atxa-core:bpLocation "202,660" ;
+	atxa-core:bpIndex "0" .
+
+_:node163frqcjnx4051 atxa-core:bendpoint _:node163frqcjnx7522 .
+
+_:node163frqcjnx7522 atxa-core:bpLocation "-28,660" ;
+	atxa-core:bpIndex "1" .
+
+_:node163frqcjnx5295 atxa-core:contains _:node163frqcjnx5327 .
+
+_:node163frqcjnx5327 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Sensor$SendPeriodicFabricatedMessage> ;
+	atxa-core:posX "92" ;
+	atxa-core:posY "659" .
+
+_:node163frqcjnx4097 a atxa-core:link ;
+	atxa-core:model atxa-jdt:inherits ;
+	rdf:subject _:node163frqcjnx5327 ;
+	rdf:object _:node163frqcjnx5323 ;
+	atxa-core:bendpoint _:node163frqcjnx7523 .
+
+_:node163frqcjnx7523 atxa-core:bpLocation "202,688" ;
+	atxa-core:bpIndex "0" .
+
+_:node163frqcjnx4097 atxa-core:bendpoint _:node163frqcjnx7524 .
+
+_:node163frqcjnx7524 atxa-core:bpLocation "-28,688" ;
+	atxa-core:bpIndex "1" .
+
+_:node163frqcjnx5290 atxa-core:contains _:node163frqcjnx5291 .
+
+_:node163frqcjnx5291 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation> ;
+	atxa-core:posX "110" ;
+	atxa-core:posY "194" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.scenario> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.setup()> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.sendInstruction(Instruction,)> , <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.dispatch(ACLMessage,)> .
+
+_:node163frqcjnx5291 atxa-core:contains _:node163frqcjnx5292 .
+
+_:node163frqcjnx5292 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.scenario> ;
+	atxa-core:posX "111" ;
+	atxa-core:posY "216" .
+
+_:node163frqcjnx530 a atxa-core:link ;
+	atxa-core:model atxa-jdt:refType ;
+	rdf:subject _:node163frqcjnx5292 ;
+	rdf:object _:node163frqcjnx5293 .
+
+_:node163frqcjnx5291 atxa-core:contains _:node163frqcjnx5294 .
+
+_:node163frqcjnx5294 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.setup()> ;
+	atxa-core:posX "111" ;
+	atxa-core:posY "232" .
+
+_:node163frqcjnx5291 atxa-core:contains _:node163frqcjnx7525 .
+
+_:node163frqcjnx7525 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.dispatch(ACLMessage,)> ;
+	atxa-core:posX "111" ;
+	atxa-core:posY "248" .
+
+_:node163frqcjnx5291 atxa-core:contains _:node163frqcjnx7526 .
+
+_:node163frqcjnx7526 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim$Simulation.sendInstruction(Instruction,)> ;
+	atxa-core:posX "111" ;
+	atxa-core:posY "264" .
+
+atxa-core:docRoot atxa-core:contains _:node163frqcjnx5330 .
+
+_:node163frqcjnx5330 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#jade.core> ;
+	atxa-core:posX "-49" ;
+	atxa-core:posY "140" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#jade.core> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#jade.core$Agent> .
+
+_:node163frqcjnx5330 atxa-core:contains _:node163frqcjnx5296 .
+
+_:node163frqcjnx5296 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#jade.core$Agent> ;
+	atxa-core:posX "-43" ;
+	atxa-core:posY "165" .
+
+atxa-core:docRoot atxa-core:contains _:node163frqcjnx5331 .
+
+_:node163frqcjnx5331 a atxa-core:node ;
+	atxa-core:model atxa-jdt-wkspc:mwac ;
+	atxa-core:posX "358" ;
+	atxa-core:posY "413" .
+
+atxa-jdt-wkspc:mwac atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#mwac$Groups> , <http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood> .
+
+_:node163frqcjnx5331 atxa-core:contains _:node163frqcjnx5301 .
+
+_:node163frqcjnx5301 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#mwac$Groups> ;
+	atxa-core:posX "368" ;
+	atxa-core:posY "438" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#mwac$Groups> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#mwac$Groups.groups> .
+
+_:node163frqcjnx5301 atxa-core:contains _:node163frqcjnx5332 .
+
+_:node163frqcjnx5332 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#mwac$Groups.groups> ;
+	atxa-core:posX "369" ;
+	atxa-core:posY "460" .
+
+_:node163frqcjnx5331 atxa-core:contains _:node163frqcjnx5304 .
+
+_:node163frqcjnx5304 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood> ;
+	atxa-core:posX "364" ;
+	atxa-core:posY "492" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood.owner> , <http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood.neighbours> .
+
+_:node163frqcjnx5304 atxa-core:contains _:node163frqcjnx5333 .
+
+_:node163frqcjnx5333 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood.owner> ;
+	atxa-core:posX "365" ;
+	atxa-core:posY "514" .
+
+_:node163frqcjnx5304 atxa-core:contains _:node163frqcjnx5334 .
+
+_:node163frqcjnx5334 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#mwac$Neighbourhood.neighbours> ;
+	atxa-core:posX "365" ;
+	atxa-core:posY "530" .
+
+atxa-core:docRoot atxa-core:contains _:node163frqcjnx5335 .
+
+_:node163frqcjnx5335 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn> ;
+	atxa-core:posX "516" ;
+	atxa-core:posY "170" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim.scn> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription> .
+
+_:node163frqcjnx5335 atxa-core:contains _:node163frqcjnx5293 .
+
+_:node163frqcjnx5293 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario> ;
+	atxa-core:posX "526" ;
+	atxa-core:posY "195" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario.organization> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario.workstationId> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario.actions> .
+
+_:node163frqcjnx5293 atxa-core:contains _:node163frqcjnx5344 .
+
+_:node163frqcjnx5344 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario.workstationId> ;
+	atxa-core:posX "527" ;
+	atxa-core:posY "217" .
+
+_:node163frqcjnx5293 atxa-core:contains _:node163frqcjnx5342 .
+
+_:node163frqcjnx5342 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario.actions> ;
+	atxa-core:posX "527" ;
+	atxa-core:posY "233" .
+
+_:node163frqcjnx5293 atxa-core:contains _:node163frqcjnx5343 .
+
+_:node163frqcjnx5343 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Scenario.organization> ;
+	atxa-core:posX "527" ;
+	atxa-core:posY "249" .
+
+_:node163frqcjnx710 a atxa-core:link ;
+	atxa-core:model atxa-jdt:refType ;
+	rdf:subject _:node163frqcjnx5343 ;
+	rdf:object _:node163frqcjnx5336 .
+
+_:node163frqcjnx5335 atxa-core:contains _:node163frqcjnx5336 .
+
+_:node163frqcjnx5336 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization> ;
+	atxa-core:posX "522" ;
+	atxa-core:posY "279" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.nodeDescriptions> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.stable> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.nodeNeighbours> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.add(NodeDescription,)> .
+
+_:node163frqcjnx5336 atxa-core:contains _:node163frqcjnx5337 .
+
+_:node163frqcjnx5337 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.nodeDescriptions> ;
+	atxa-core:posX "523" ;
+	atxa-core:posY "301" .
+
+_:node163frqcjnx5336 atxa-core:contains _:node163frqcjnx5338 .
+
+_:node163frqcjnx5338 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.nodeNeighbours> ;
+	atxa-core:posX "523" ;
+	atxa-core:posY "317" .
+
+_:node163frqcjnx5336 atxa-core:contains _:node163frqcjnx5339 .
+
+_:node163frqcjnx5339 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.stable> ;
+	atxa-core:posX "523" ;
+	atxa-core:posY "333" .
+
+_:node163frqcjnx5336 atxa-core:contains _:node163frqcjnx5340 .
+
+_:node163frqcjnx5340 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$Organization.add(NodeDescription,)> ;
+	atxa-core:posX "523" ;
+	atxa-core:posY "349" .
+
+_:node163frqcjnx1100 a atxa-core:link ;
+	atxa-core:model atxa-jdt:refType ;
+	rdf:subject _:node163frqcjnx5340 ;
+	rdf:object _:node163frqcjnx5341 .
+
+_:node163frqcjnx5335 atxa-core:contains _:node163frqcjnx5341 .
+
+_:node163frqcjnx5341 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription> ;
+	atxa-core:posX "541" ;
+	atxa-core:posY "383" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.id> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.role> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.groups> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.range> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.x> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.y> , <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.malicious> .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5347 .
+
+_:node163frqcjnx5347 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.id> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "405" .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5348 .
+
+_:node163frqcjnx5348 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.y> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "421" .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5349 .
+
+_:node163frqcjnx5349 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.x> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "437" .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5350 .
+
+_:node163frqcjnx5350 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.range> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "453" .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5351 .
+
+_:node163frqcjnx5351 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.role> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "469" .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5352 .
+
+_:node163frqcjnx5352 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.groups> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "485" .
+
+_:node163frqcjnx5341 atxa-core:contains _:node163frqcjnx5353 .
+
+_:node163frqcjnx5353 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#sim.scn$NodeDescription.malicious> ;
+	atxa-core:posX "542" ;
+	atxa-core:posY "501" .
+
+atxa-core:docRoot atxa-core:contains _:node163frqcjnx5354 .
+
+_:node163frqcjnx5354 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#jade.core.behaviours> ;
+	atxa-core:posX "-128" ;
+	atxa-core:posY "421" .
+
+<http://www.architexa.com/rdf/jdt-wkspc#jade.core.behaviours> atxa-core:contains <http://www.architexa.com/rdf/jdt-wkspc#jade.core.behaviours$TickerBehaviour> , <http://www.architexa.com/rdf/jdt-wkspc#jade.core.behaviours$CyclicBehaviour> .
+
+_:node163frqcjnx5354 atxa-core:contains _:node163frqcjnx5323 .
+
+_:node163frqcjnx5323 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#jade.core.behaviours$TickerBehaviour> ;
+	atxa-core:posX "-122" ;
+	atxa-core:posY "509" .
+
+_:node163frqcjnx5354 atxa-core:contains _:node163frqcjnx5319 .
+
+_:node163frqcjnx5319 a atxa-core:node ;
+	atxa-core:model <http://www.architexa.com/rdf/jdt-wkspc#jade.core.behaviours$CyclicBehaviour> ;
+	atxa-core:posX "-75" ;
+	atxa-core:posY "446" .
+

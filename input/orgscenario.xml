@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+	<organization stable="true">
+		<node id="1" x="1" y="1" range="3" role="Representative" />
+		<node id="2" x="2" y="3" range="3" role="Link">
+			<group id="1" />
+			<group id="6" />
+		</node>
+		<node id="3" x="3" y="6" range="3" role="Simple">
+			<group id="6" />
+		</node>
+		<node id="4" x="3" y="2" range="3" role="Link">
+			<group id="1" />
+			<group id="6" />
+		</node>
+		<node id="5" x="4" y="1" range="3" role="Link">
+			<group id="1" />
+			<group id="6" />
+			<group id="9" />
+		</node>
+		<node id="6" x="4" y="4" range="3" role="Representative" />
+		<node id="7" x="6" y="6" range="3" role="Link">
+			<group id="6" />
+			<group id="11" />
+		</node>
+		<node id="8" x="6" y="3" range="3" role="Link">
+			<group id="6" />
+			<group id="9" />
+			<group id="11" />
+		</node>
+		<node id="9" x="6" y="1" range="3" role="Representative" />
+		<node id="10" x="8" y="2" range="3" role="Link">
+			<group id="9" />
+			<group id="11" />
+		</node>
+		<node id="11" x="8" y="5" range="3" role="Representative" />
+		<node id="12" x="9" y="6" range="3" role="Simple">
+			<group id="11" />
+		</node>
+	</organization>
+
+	
+	<workstation id="1" />
+
+	<!-- The default behaviour of nodes: -->	
+	<measures id="*" total="5" interval="100" issued="0"/>
+	
+	<!-- The specification of attacks follows: -->
+	<!-- attack type="fabricate" num="1" role="Simple" issued="1000" msgType="RouteReply" total="5" interval="1000" /-->
+	<attack type="nofwd" num="2" role="Representative" issued="200" drop="0.9"/>
+	<!-- attack type="modify" num="1" role="Representative" issued="2000" msgType="RouteReply" /-->
+		
+</scenario>
