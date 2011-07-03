@@ -117,6 +117,23 @@ public class Organization {
 		
 		return simple;
 	}
+	
+	
+	public List<Integer> getIdsWithRole(Role role, int ws, boolean excludeMalicious){
+		List<Integer> result = new ArrayList<Integer>();
+		
+		for(NodeDescription nd : nodeDescriptions){
+			if(nd.role == role && nd.id != ws)
+				if(excludeMalicious){
+					if(!nd.malicious) 
+						result.add(nd.id);
+				}
+				else
+					result.add(nd.id);
+		}
+		
+		return result;
+	}
 
 	private List<Integer> inRangeOf(int id) {
 		List<Integer> neighbourIds = new ArrayList<Integer>();
@@ -151,11 +168,16 @@ public class Organization {
 	}
 	
 	public void setMalicious(int nodeId, boolean malicious){
-		nodeDescriptions.get(nodeId).setMalicious(malicious);
+		for(NodeDescription nd : nodeDescriptions)
+			if(nd.id == nodeId)
+				nd.setMalicious(malicious);
 	}
 	
 	public boolean isMalicious(int nodeId){
-		return nodeDescriptions.get(nodeId).isMalicious();
+		for(NodeDescription nd : nodeDescriptions)
+			if(nd.id == nodeId)
+				return nd.malicious;
+		return false;
 	}
 
 	@Override

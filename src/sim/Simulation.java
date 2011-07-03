@@ -8,10 +8,11 @@ import jade.lang.acl.UnreadableException;
 import jade.wrapper.StaleProxyException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import sim.eval.Report;
+import sim.events.BecomeMaliciousEvent;
+import sim.events.CorruptedRouteEvent;
 import sim.events.Event;
 import sim.events.ReceivedFrameEvent;
 import sim.events.ReceivedMeasureEvent;
@@ -23,9 +24,25 @@ import sim.scn.Scenario;
 import sim.scn.act.ActionDescription;
 import sim.scn.instr.Instruction;
 
+/**
+ * The <code> Simulation </code> class is a subclass of the Jade
+ * <code> Agent </code> class. A <code> Simulation </code> agent holds a
+ * scenario for the sensor network simulation, and sends out instructions to
+ * <code>Sensor</code> agents in the MWAC organization. It also plays the role
+ * of the environment, by dispatching frames broadcasted by Sensors.
+ * <p>
+ * The Simulation agent (sim agent) builds a report at the end of a simulation
+ * </p>
+ * 
+ * @author Anca
+ * @see Sensor
+ * @see Scenario
+ * @see Report
+ */
 @SuppressWarnings("serial")
 public class Simulation extends Agent {
 
+	private static final int DELAY_END = 5000;
 	Scenario scenario;
 	Report report;
 	
@@ -33,27 +50,20 @@ public class Simulation extends Agent {
 	
 	AID[] sensorsAID;
 	
-	int receivedMeasures = 0;
-	int sentMeasures = 0;
-	
-	List<String> receivedM = new ArrayList<String>();
-	
-	
-	
+	@Override
 	protected void setup() {
 			
 		Object[] args = getArguments();
 
 		scenario = new Scenario((String) args[0]);
-		report = new Report((String) args[0]);
+		report = new Report(getHtmlFileName((String) args[0]));
+		
 
 		Organization org = scenario.getOrganization();
 
 		System.out.println("Organization loaded...");
 		
-		List<ActionDescription> actions = scenario.getActions();
-		
-		
+		List<ActionDescription> actions = scenario.getActions();	
 		
 		sensorsAID = new AID[org.getNodeDescriptions().size()];
 		
@@ -108,12 +118,13 @@ public class Simulation extends Agent {
 								report.addFramesReceived(1);
 							} else if (event instanceof UnauthorizedMessageEvent){
 								UnauthorizedMessageEvent ume = (UnauthorizedMessageEvent) event;
-								System.out.println(ume.getSource()
-										+ ": UNAUTHORIZED "
-										+ ume.getMessageType() + " sender "
-										+ ume.getMsgSender() + " Source "
-										+ ume.getMsgSource());
-								
+								report.addUnauthorizedMessage(ume.getSource(), ume.getMessageType(), ume.getMsgSource(), ume.getMsgSender());
+							} else if (event instanceof BecomeMaliciousEvent){
+								report.addMaliciousAgent(event.getSource());
+								scenario.getOrganization().setMalicious(event.getSource(), true);
+							} else if (event instanceof CorruptedRouteEvent){
+								CorruptedRouteEvent cre = (CorruptedRouteEvent) event;
+								report.addCorruptedRoute(cre.getSource(), cre.getRoute(), cre.getFrameSender());
 							}
 						} catch (UnreadableException e) {
 							e.printStackTrace();
@@ -123,7 +134,7 @@ public class Simulation extends Agent {
 				
 				// END SIMULATION
 				long crtTime = System.currentTimeMillis();
-				if(crtTime > dateLastNotification + 5000 && crtTime > dateLastDispatch + 5000){
+				if(crtTime > dateLastNotification + DELAY_END && crtTime > dateLastDispatch + DELAY_END){
 					if(!reportClosed){
 						report.close();
 						reportClosed = true;
@@ -138,23 +149,27 @@ public class Simulation extends Agent {
 	
 		// SEND OUT INSTRUCTIONS FOR AGENTS		
 		for (int i = 0; i < actions.size() - 1; i++) {
-			List<Instruction> iList = scenario.buildInstructionList(actions.get(i));
 			
-			for (Instruction instr : iList){
-				
+			List<Instruction> instructionList = scenario.buildInstructionList(actions.get(i));
+			
+			for (Instruction instr : instructionList)				
 				sendInstruction(instr);
-			}
+			
 			sleep(scenario.sleepTime(i));
 		}
 
 		List<Instruction> last = scenario.buildInstructionList(actions.get(actions.size()-1));
 		for(Instruction instr : last)
 			sendInstruction(instr);
-
-		
 	}
-	
-	// Wireless communication -- dispatch frame to all neighbours of the sender	
+
+	/**
+	 * Sends the <code>Frame</code> contained in the <code>ACLMessage</code> to
+	 * all the neighbours of the senders
+	 * 
+	 * @param message
+	 * @see Organization
+	 */
 	private void dispatch(ACLMessage message){
 		int sender = Integer.parseInt(message.getSender().getLocalName());
 		
@@ -168,8 +183,14 @@ public class Simulation extends Agent {
 		
 		send(message);
 	}
-	
-	// Send instructions to agents
+
+	/**
+	 * Sends an ACL message containing an <code>Instruction</code> to all the
+	 * agents that should follow the instruction
+	 * 
+	 * @param instr the instruction sent by the <code>Simulation</code> agent
+	 * @see Instruction
+	 */
 	private void sendInstruction(Instruction instr){
 		ACLMessage request = new ACLMessage(ACLMessage.REQUEST);			
 		
@@ -184,7 +205,27 @@ public class Simulation extends Agent {
 		}
 	}
 
-	public void sleep(long ms){
+	/**
+	 * Obtains the name of the file in which the results will be placed.
+	 * 
+	 * @param fileName
+	 *            the name of the file containing the scenario description for
+	 *            this simulation
+	 * @return the name of the output file (a .html)
+	 * @see Report
+	 */
+	private static String getHtmlFileName(String fileName){
+		String tmp  = String.copyValueOf(fileName.toCharArray());
+		return "output/" + tmp.substring(tmp.indexOf("/") + 1, tmp.indexOf(".")) + ".html";		
+	}
+
+	/**
+	 * Specifies that the simulation halts for a while.
+	 * 
+	 * @param ms
+	 *            number of milliseconds during which the agent sleeps
+	 */
+	private void sleep(long ms){
 		try {
 			Thread.sleep(ms);
 		} catch (Exception e) {

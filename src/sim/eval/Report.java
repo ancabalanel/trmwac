@@ -25,25 +25,28 @@ public class Report {
 	int totalFramesSent = 0;
 	int totalFramesReceived = 0;
 	
+	int numMaliciousAgents = 0;
+	int numCorruptedRouteEvents = 0;
+	int unauthorizedMessages = 0;
+	
 	private PrintWriter out;
 	
-	public Report (String inputName){
+	public Report (String htmlFile){
 		
 		agentSentMeasures = new HashMap<Integer, List<String>>();
 		agentReceivedMeasures = new HashMap<Integer, List<String>>();
 		
-		String outputName = "output/orgscenario.out";
-		
 		try {
-			out = new PrintWriter(new File(outputName));		
+			out = new PrintWriter(new File(htmlFile));		
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 		
 	}
 	
+	// TODO: review
 	public double computeLostPercentage(){
-		return ((double) getTotalMeasuresReceived() / (double) getTotalMeasuresSent()) * 100.0;
+		return (100.0 - ((double) getTotalMeasuresReceived() / (double) getTotalMeasuresSent()) * 100.0);
 	}
 	
 	public void addSentMeasure(int aid, String measure) {
@@ -77,6 +80,18 @@ public class Report {
 		totalFramesSent += nFrames;
 	}
 	
+	public void addMaliciousAgent(int source){
+		numMaliciousAgents++;
+	}
+	
+	public void addCorruptedRoute(int source, List<Integer> route, int sender){
+		numCorruptedRouteEvents++;
+	}
+	
+	public void addUnauthorizedMessage(int source, String msgType, int msgSource, int msgSender){
+		unauthorizedMessages++;
+	}
+	
 	private int getTotalMeasuresSent(){
 		int totalMeasuresSent = 0;
 		
@@ -101,11 +116,16 @@ public class Report {
 	public void close(){
 		if (out != null) {
 			// write results
+			out.println("Number of malicious agents: " + numMaliciousAgents);
+			out.println();
 			out.println("Total measures sent: " + getTotalMeasuresSent());
 			out.println("Total measures received: " + getTotalMeasuresReceived());
+			out.println("Lost:\t\t\t\t" + computeLostPercentage() + "%");
 			out.println();
 			out.println("Total frames sent: " + totalFramesSent);
 			out.println("Total frames received: " + totalFramesReceived);
+			
+		
 			// close file
 			out.close();
 		}

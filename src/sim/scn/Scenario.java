@@ -44,7 +44,7 @@ public class Scenario {
 	
 	List<ActionDescription> actions;
 	
-	int crtAction = 0;
+	String finalConfigFilename = "output/default.xml";
 	
 	public Scenario() {
 		organization = new Organization();
@@ -54,6 +54,7 @@ public class Scenario {
 	public Scenario(String filePath) {
 
 		this();
+		finalConfigFilename = getFinalConfigFilename(filePath);
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		
 
@@ -179,11 +180,12 @@ public class Scenario {
 			long interval = Long.parseLong(attack.getAttribute("interval"));
 			return new FabricationDescription(issued, numAttackers, role, msgType, interval, totalMsgs);
 		} else if (type.equals("nofwd")){
-			float drop  = Float.parseFloat(attack.getAttribute("drop"));
+			float drop  = Float.parseFloat(attack.getAttribute("probDrop"));
 			return new NoForwardDescription(issued, numAttackers, role, drop);
 		} else if (type.equals("modify")){
-			String msgType = attack.getAttribute("msgType");
-			return new ModificationDescription(issued, numAttackers, role, msgType);
+			String msgType = "mwac.msgs.M" + attack.getAttribute("msgType");
+			float probMod = Float.parseFloat(attack.getAttribute("probMod"));
+			return new ModificationDescription(issued, numAttackers, role, msgType, probMod);
 		} else
 			return null;
 	}
@@ -204,32 +206,24 @@ public class Scenario {
 	 */
 	public List<Integer> getRandomIds(int num, Role role){
 		List<Integer> ids = new ArrayList<Integer>();
-		
-		/* TODO: uncomment this 
-		if (role == Role.Simple)
-			ids = organization.getSimpleIds(workstationId);
-		if(role == Role.Link)
-			ids = organization.getLinkIds(workstationId);
-		if(role == Role.Representative)
-			ids = organization.getRepresentativeIds(workstationId);	
-		
-		
-		
-		if(ids.size() < num)
+
+		ids = organization.getIdsWithRole(role, workstationId, true);
+
+		if (ids.size() < num){
+			for(Integer i : ids)
+				organization.setMalicious(i, true);
 			return ids;
-		else{
+		}
+		else {
 			List<Integer> randNum = new ArrayList<Integer>();
 			Collections.shuffle(ids);
-			for(int i=0;i<num;i++)
+			for (int i = 0; i < num; i++)
 				randNum.add(ids.get(i));
+			for(Integer r : randNum)
+				organization.setMalicious(r, true);
 			return randNum;
 		}
-		*/
-		// TODO: remove this
-		ids.add(6);
-		return ids;
 	}
-	
 	
 	public List<Instruction> buildInstructionList(ActionDescription ad){
 		List<Instruction> instructions = new ArrayList<Instruction>();
@@ -261,7 +255,7 @@ public class Scenario {
 			List<Integer> attackers = getRandomIds(md.getNumAttackers(), md.getRoleAttackers());
 			
 			for(Integer a : attackers){
-				instructions.add(new ModifyMessageInstruction(a, md.getMsgType()));
+				instructions.add(new ModifyMessageInstruction(a, md.getMsgType(), md.getModProb()));
 			}
 		}
 		return instructions;			
@@ -271,6 +265,10 @@ public class Scenario {
 		return actions;
 	}
 
+	public int getWorkstationId() {
+		return workstationId;
+	}
+
 	public long sleepTime(int i){
 		if(actions.get(i+1) != null && actions.get(i) != null)
 			return actions.get(i+1).getIssued() - actions.get(i).getIssued();
@@ -278,6 +276,10 @@ public class Scenario {
 	}
 	
 
+	private static String getFinalConfigFilename(String fileName){
+		String tmp  = String.copyValueOf(fileName.toCharArray());
+		return "output/" + tmp.substring(tmp.indexOf("/") + 1, tmp.indexOf(".")) + "_f.xml";		
+	}
 	@Override
 	public String toString() {
 		return "Scenario [org:\t" + organization + "]";
