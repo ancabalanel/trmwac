@@ -9,11 +9,11 @@ import mwac.msgs.MData;
  * @author Anca
  * @see MData
  */
-public class DataInfo {
+public class WaitingDataInfo {
 	private MData mdata;
 	private boolean wasSent;
 
-	public DataInfo(MData mdata) {
+	public WaitingDataInfo(MData mdata) {
 		this.setMdata(mdata);
 		setWasSent(false);
 	}

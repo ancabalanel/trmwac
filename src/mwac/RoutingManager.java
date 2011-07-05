@@ -17,22 +17,22 @@ import mwac.msgs.MRouteRequest;
  */
 public class RoutingManager {
 	
-	public static int requestId = 0;
+	private static int requestId = 0;
 	
-	Map<Integer,Integer> sentRREQ;
+	private Map<Integer,Integer> sentRREQ;
 	
-	List<ProcessedRREQ> processedRREQ;
-	Map<Integer, RoutingInfo> routingTable;
+	private List<ProcessedRREQ> processedRREQ;
+	private Map<Integer, RoutingTableEntry> routingTable;
 	
 	
 	public RoutingManager(){
 		sentRREQ = new HashMap<Integer, Integer>();
 		processedRREQ = new ArrayList<ProcessedRREQ>();
-		routingTable = new HashMap<Integer, RoutingInfo>();
+		routingTable = new HashMap<Integer, RoutingTableEntry>();
 	}
 	
 	public void addRoute(int dest, int repDest, List<Integer> route){
-		routingTable.put(dest, new RoutingInfo(repDest, route));
+		routingTable.put(dest, new RoutingTableEntry(repDest, route));
 	}
 	
 	public void addRoute(int dest, MRouteReply rrep, int id){
@@ -48,7 +48,7 @@ public class RoutingManager {
 			route = newRoute;
 		}
 		
-		routingTable.put(dest, new RoutingInfo(rrep.getSource(), route));
+		routingTable.put(dest, new RoutingTableEntry(rrep.getSource(), route));
 	}
 	
 	public int generateRREQ(int destination){
@@ -64,11 +64,11 @@ public class RoutingManager {
 		return dest;		 
 	}
 	
-	public RoutingInfo getRoutingInfo(int dest){
+	public RoutingTableEntry getRoutingInfo(int dest){
 		return routingTable.get(dest);
 	}
 	
-	public Map<Integer, RoutingInfo> getRoutingTable() {
+	public Map<Integer, RoutingTableEntry> getRoutingTable() {
 		return routingTable;
 	} 
 	

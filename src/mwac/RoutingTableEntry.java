@@ -2,11 +2,11 @@ package mwac;
 
 import java.util.List;
 
-public class RoutingInfo{
+public class RoutingTableEntry{
 	int repDest;
 	List<Integer> route;
 	
-	public RoutingInfo(int repDest, List<Integer> route) {
+	public RoutingTableEntry(int repDest, List<Integer> route) {
 		super();
 		this.repDest = repDest;
 		this.route = route;

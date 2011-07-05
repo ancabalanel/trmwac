@@ -13,10 +13,12 @@ import java.util.List;
 import sim.eval.Report;
 import sim.events.BecomeMaliciousEvent;
 import sim.events.CorruptedRouteEvent;
+import sim.events.DistrustNeighbourEvent;
 import sim.events.Event;
 import sim.events.ReceivedFrameEvent;
 import sim.events.ReceivedMeasureEvent;
 import sim.events.SentMeasureEvent;
+import sim.events.TrustDecreasedEvent;
 import sim.events.UnauthorizedMessageEvent;
 import sim.scn.NodeDescription;
 import sim.scn.Organization;
@@ -42,7 +44,13 @@ import sim.scn.instr.Instruction;
 @SuppressWarnings("serial")
 public class Simulation extends Agent {
 
-	private static final int DELAY_END = 5000;
+	/** After this delay from the last received message the simulation ends */
+	private static final long DELAY_END = 5000;
+	
+	/** Maximum simulation time */
+	private static final long MAXIMUM_TIME = 15000;
+	long simulationStart = System.currentTimeMillis();
+	
 	Scenario scenario;
 	Report report;
 	
@@ -85,6 +93,8 @@ public class Simulation extends Agent {
 			}
 		}
 		
+		simulationStart = System.currentTimeMillis();
+		
 		// HANDLING MESSAGES FROM AGENTS
 		addBehaviour(new CyclicBehaviour(this) {
 			
@@ -125,6 +135,11 @@ public class Simulation extends Agent {
 							} else if (event instanceof CorruptedRouteEvent){
 								CorruptedRouteEvent cre = (CorruptedRouteEvent) event;
 								report.addCorruptedRoute(cre.getSource(), cre.getRoute(), cre.getFrameSender());
+							} else if (event instanceof TrustDecreasedEvent) {
+								// System.out.println(event.getSource() + " decreased trust of " + ((TrustDecreasedEvent)event).getWatchedNode());
+							} else if (event instanceof DistrustNeighbourEvent){
+								DistrustNeighbourEvent dis = (DistrustNeighbourEvent)event;
+								report.addDistrustNode(dis.getSource(), dis.getNeighbour());
 							}
 						} catch (UnreadableException e) {
 							e.printStackTrace();
@@ -134,7 +149,9 @@ public class Simulation extends Agent {
 				
 				// END SIMULATION
 				long crtTime = System.currentTimeMillis();
-				if(crtTime > dateLastNotification + DELAY_END && crtTime > dateLastDispatch + DELAY_END){
+				if (crtTime > dateLastNotification + DELAY_END
+						|| crtTime > dateLastDispatch + DELAY_END
+						|| crtTime > simulationStart + MAXIMUM_TIME) {
 					if(!reportClosed){
 						report.close();
 						reportClosed = true;
@@ -146,21 +163,22 @@ public class Simulation extends Agent {
 		});
 		
 		
-	
-		// SEND OUT INSTRUCTIONS FOR AGENTS		
-		for (int i = 0; i < actions.size() - 1; i++) {
-			
-			List<Instruction> instructionList = scenario.buildInstructionList(actions.get(i));
-			
-			for (Instruction instr : instructionList)				
-				sendInstruction(instr);
-			
-			sleep(scenario.sleepTime(i));
-		}
+		if (!actions.isEmpty()) {
+			// SEND OUT INSTRUCTIONS FOR AGENTS
+			for (int i = 0; i < actions.size() - 1; i++) {
 
-		List<Instruction> last = scenario.buildInstructionList(actions.get(actions.size()-1));
-		for(Instruction instr : last)
-			sendInstruction(instr);
+				List<Instruction> instructionList = scenario.buildInstructionList(actions.get(i));
+
+				for (Instruction instr : instructionList)
+					sendInstruction(instr);
+
+				sleep(scenario.sleepTime(i));
+			}
+
+			List<Instruction> last = scenario.buildInstructionList(actions.get(actions.size() - 1));
+			for (Instruction instr : last)
+				sendInstruction(instr);
+		}
 	}
 
 	/**

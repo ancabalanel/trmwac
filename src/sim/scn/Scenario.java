@@ -39,13 +39,31 @@ import sim.scn.instr.SendMeasuresInstruction;
  */
 public class Scenario {
 
+	/**
+	 * @return The first child element of the root node that has the given tag,
+	 *         or null if there is no such element.
+	 */
+	private static Element getElementByTagName(Element root, String tag) {
+		NodeList l = root.getElementsByTagName(tag);
+		if (l != null) {
+			return (Element) l.item(0);
+		}
+
+		return null;
+	}
+	private static String getFinalConfigFilename(String fileName){
+		String tmp  = String.copyValueOf(fileName.toCharArray());
+		return "output/" + tmp.substring(tmp.indexOf("/") + 1, tmp.indexOf(".")) + "_f.xml";		
+	}
+	
 	Organization organization;
+	
 	int workstationId;
 	
 	List<ActionDescription> actions;
-	
+
 	String finalConfigFilename = "output/default.xml";
-	
+
 	public Scenario() {
 		organization = new Organization();
 		actions = new ArrayList<ActionDescription>();
@@ -100,17 +118,105 @@ public class Scenario {
 
 	}
 
-	/**
-	 * @return The first child element of the root node that has the given tag,
-	 *         or null if there is no such element.
-	 */
-	private static Element getElementByTagName(Element root, String tag) {
-		NodeList l = root.getElementsByTagName(tag);
-		if (l != null) {
-			return (Element) l.item(0);
-		}
+	public List<Instruction> buildInstructionList(ActionDescription ad){
+		List<Instruction> instructions = new ArrayList<Instruction>();
+		
+		if(ad instanceof SendMeasuresDescription){
+			SendMeasuresDescription sm = (SendMeasuresDescription)ad;
+			for(Integer agent : ((SendMeasuresDescription) ad).getIds()){
+				instructions.add(new SendMeasuresInstruction(agent, sm.getInterval(), sm.getTotalActions(), workstationId));
+			}
+		} else if (ad instanceof FabricationDescription) {
+			FabricationDescription fab = (FabricationDescription) ad;
 
-		return null;
+			List<Integer> attackers = getRandomIds(fab.getNumAttackers(), fab.getRoleAttackers());
+
+			for(Integer a : attackers){
+				instructions.add(new FabricateMessageInstruction(a, fab.getMessageType(), fab.getInterval(), fab.getTotalMsgs()));
+			}
+		} else if (ad instanceof NoForwardDescription) {
+			NoForwardDescription nfwd = (NoForwardDescription) ad;
+			
+			List<Integer> attackers = getRandomIds(nfwd.getNumAttackers(), nfwd.getRoleAttackers());
+			
+			for(Integer a : attackers){
+				instructions.add(new NoForwardInstruction(a, nfwd.getDropPercentage()));
+			}
+		} else if (ad instanceof ModificationDescription){
+			ModificationDescription md = (ModificationDescription) ad;
+			
+			List<Integer> attackers = getRandomIds(md.getNumAttackers(), md.getRoleAttackers());
+			
+			for(Integer a : attackers){
+				instructions.add(new ModifyMessageInstruction(a, md.getMsgType(), md.getModProb()));
+			}
+		}
+		return instructions;			
+	}
+	
+	public List<ActionDescription> getActions() {
+		return actions;
+	}
+	
+	public List<Integer> getNodeIds() {
+		return organization.getNodeIds();
+	}
+
+	public Organization getOrganization() {
+		return organization;
+	}
+
+	/**
+	 * 
+	 * @param num
+	 * @param role
+	 * @return num agents with the specified role, to be used as attackers
+	 */
+	public List<Integer> getRandomIds(int num, Role role){
+		List<Integer> ids = new ArrayList<Integer>();
+
+		ids = organization.getIdsWithRole(role, workstationId, true);
+
+		if (ids.size() < num){
+			for(Integer i : ids)
+				organization.setMalicious(i, true);
+			return ids;
+		}
+		else {
+			List<Integer> randNum = new ArrayList<Integer>();
+			Collections.shuffle(ids);
+			for (int i = 0; i < num; i++)
+				randNum.add(ids.get(i));
+			for(Integer r : randNum)
+				organization.setMalicious(r, true);
+			return randNum;
+		}
+	}
+	
+	public int getWorkstationId() {
+		return workstationId;
+	}
+
+	private AttackDescription parseAttack(Element attack){
+	 	String type = attack.getAttribute("type"); 
+		int numAttackers = Integer.parseInt(attack.getAttribute("num"));
+		Role role = Role.valueOf(attack.getAttribute("role"));
+		Long issued = Long.parseLong(attack.getAttribute("issued"));
+		
+		if(type.equals("fabricate")){
+			String msgType = attack.getAttribute("msgType");
+			int totalMsgs = Integer.parseInt(attack.getAttribute("total"));
+			long interval = Long.parseLong(attack.getAttribute("interval"));
+			return new FabricationDescription(issued, numAttackers, role, msgType, interval, totalMsgs);
+		} else if (type.equals("nofwd")){
+			float drop  = Float.parseFloat(attack.getAttribute("probDrop"));
+			return new NoForwardDescription(issued, numAttackers, role, drop);
+		} else if (type.equals("modify")){
+			String msgType = "mwac.msgs.M" + attack.getAttribute("msgType");
+			float probMod = Float.parseFloat(attack.getAttribute("probMod"));
+			return new ModificationDescription(issued, numAttackers, role, msgType, probMod);
+		} else
+			return null;
 	}
 
 	private void parseOrganization(Element element) {
@@ -168,117 +274,11 @@ public class Scenario {
 		return new SendMeasuresDescription(issued, ids, total, interval);
 	}
 	
-	private AttackDescription parseAttack(Element attack){
-	 	String type = attack.getAttribute("type"); 
-		int numAttackers = Integer.parseInt(attack.getAttribute("num"));
-		Role role = Role.valueOf(attack.getAttribute("role"));
-		Long issued = Long.parseLong(attack.getAttribute("issued"));
-		
-		if(type.equals("fabricate")){
-			String msgType = attack.getAttribute("msgType");
-			int totalMsgs = Integer.parseInt(attack.getAttribute("total"));
-			long interval = Long.parseLong(attack.getAttribute("interval"));
-			return new FabricationDescription(issued, numAttackers, role, msgType, interval, totalMsgs);
-		} else if (type.equals("nofwd")){
-			float drop  = Float.parseFloat(attack.getAttribute("probDrop"));
-			return new NoForwardDescription(issued, numAttackers, role, drop);
-		} else if (type.equals("modify")){
-			String msgType = "mwac.msgs.M" + attack.getAttribute("msgType");
-			float probMod = Float.parseFloat(attack.getAttribute("probMod"));
-			return new ModificationDescription(issued, numAttackers, role, msgType, probMod);
-		} else
-			return null;
-	}
-	
-	public Organization getOrganization() {
-		return organization;
-	}
-
-	public List<Integer> getNodeIds() {
-		return organization.getNodeIds();
-	}
-
-	/**
-	 * 
-	 * @param num
-	 * @param role
-	 * @return num agents with the specified role, to be used as attackers
-	 */
-	public List<Integer> getRandomIds(int num, Role role){
-		List<Integer> ids = new ArrayList<Integer>();
-
-		ids = organization.getIdsWithRole(role, workstationId, true);
-
-		if (ids.size() < num){
-			for(Integer i : ids)
-				organization.setMalicious(i, true);
-			return ids;
-		}
-		else {
-			List<Integer> randNum = new ArrayList<Integer>();
-			Collections.shuffle(ids);
-			for (int i = 0; i < num; i++)
-				randNum.add(ids.get(i));
-			for(Integer r : randNum)
-				organization.setMalicious(r, true);
-			return randNum;
-		}
-	}
-	
-	public List<Instruction> buildInstructionList(ActionDescription ad){
-		List<Instruction> instructions = new ArrayList<Instruction>();
-		
-		if(ad instanceof SendMeasuresDescription){
-			SendMeasuresDescription sm = (SendMeasuresDescription)ad;
-			for(Integer agent : ((SendMeasuresDescription) ad).getIds()){
-				instructions.add(new SendMeasuresInstruction(agent, sm.getInterval(), sm.getTotalActions(), workstationId));
-			}
-		} else if (ad instanceof FabricationDescription) {
-			FabricationDescription fab = (FabricationDescription) ad;
-
-			List<Integer> attackers = getRandomIds(fab.getNumAttackers(), fab.getRoleAttackers());
-
-			for(Integer a : attackers){
-				instructions.add(new FabricateMessageInstruction(a, fab.getMessageType(), fab.getInterval(), fab.getTotalMsgs()));
-			}
-		} else if (ad instanceof NoForwardDescription) {
-			NoForwardDescription nfwd = (NoForwardDescription) ad;
-			
-			List<Integer> attackers = getRandomIds(nfwd.getNumAttackers(), nfwd.getRoleAttackers());
-			
-			for(Integer a : attackers){
-				instructions.add(new NoForwardInstruction(a, nfwd.getDropPercentage()));
-			}
-		} else if (ad instanceof ModificationDescription){
-			ModificationDescription md = (ModificationDescription) ad;
-			
-			List<Integer> attackers = getRandomIds(md.getNumAttackers(), md.getRoleAttackers());
-			
-			for(Integer a : attackers){
-				instructions.add(new ModifyMessageInstruction(a, md.getMsgType(), md.getModProb()));
-			}
-		}
-		return instructions;			
-	}
-
-	public List<ActionDescription> getActions() {
-		return actions;
-	}
-
-	public int getWorkstationId() {
-		return workstationId;
-	}
 
 	public long sleepTime(int i){
 		if(actions.get(i+1) != null && actions.get(i) != null)
 			return actions.get(i+1).getIssued() - actions.get(i).getIssued();
 		return 0;
-	}
-	
-
-	private static String getFinalConfigFilename(String fileName){
-		String tmp  = String.copyValueOf(fileName.toCharArray());
-		return "output/" + tmp.substring(tmp.indexOf("/") + 1, tmp.indexOf(".")) + "_f.xml";		
 	}
 	@Override
 	public String toString() {

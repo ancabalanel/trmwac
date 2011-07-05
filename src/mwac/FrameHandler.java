@@ -15,10 +15,13 @@ import mwac.msgs.MRouteRequest;
 import mwac.msgs.MRoutedData;
 import mwac.msgs.Message;
 import sim.Sensor;
+import sim.behaviours.WatchListRemoverBehaviour;
 import sim.events.CorruptedRouteEvent;
 import sim.events.ReceivedFrameEvent;
 import sim.events.ReceivedMeasureEvent;
 import sim.events.UnauthorizedMessageEvent;
+
+// TODO ** = revise
 
 /**
  * The <code>FrameHandler</code> class is used to extract a message from frames
@@ -41,7 +44,7 @@ public class FrameHandler {
 
 	int mSource;
 	int mDestination;
-
+	
 	public FrameHandler(Sensor sensor, Frame f) {
 		this.agent = sensor;
 		this.frame = f;
@@ -56,9 +59,11 @@ public class FrameHandler {
 
 		agent.sendNotification(new ReceivedFrameEvent(agent.getId()));
 
-		if (agent.status.isPromiscuousMode())
-			handleMessage();
-		else if (intendedReceiver())
+		if (agent.useTrust()) {
+			matchMessage();
+			if (intendedReceiver())
+				handleMessage();
+		} else if (intendedReceiver())
 			handleMessage();
 
 	}
@@ -71,7 +76,7 @@ public class FrameHandler {
 	}
 
 	private void handleMessage() {
-		if(agent.status.isAuthorization())
+		if(agent.useAuthorization())
 			if (!authorizeMessage()){
 				agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), 
 						message.getClass().getName(), mSource, fSender));
@@ -112,17 +117,17 @@ public class FrameHandler {
 			
 			// For representatives:
 			if (agent.getRole() == Role.Representative) {
-				// If I am the destination, or the representative of the
-				// destination
+				// If I am the destination, or the representative of the destination
 				if (agent.getId() == destination || agent.hasNeighbour(destination)) {
 
 					MRouteReply rrep = new MRouteReply(agent.getId(), rreq);
 
-					if(agent.status.mustModify(rreq)){
+					if(agent.mustModify(rreq)){
 						Message modified = modifyMessage(rreq);
 						agent.sendFrame(wrapMessage(modified));
-					} else if (!agent.status.drop())
-						agent.sendFrame(wrapMessage(rrep)); // ... send a route reply
+					} else if (!agent.mustDrop()){
+						sendAndWatchMessage(rrep); // TODO **
+					}
 
 				} else { // If I don't know the destination
 
@@ -131,19 +136,18 @@ public class FrameHandler {
 					route.add(agent.getId());
 					rreq.setRoute(route);
 					
-					if(agent.status.mustModify(rreq)){
+					if(agent.mustModify(rreq)){
 						Message modified = modifyMessage(rreq);
-						agent.sendFrame(wrapMessage(modified));
-						
-					} else 	if (!agent.status.drop())
-						agent.sendFrame(wrapMessage(rreq)); 
+						agent.sendFrame(wrapMessage(modified));						
+					} else 	if (!agent.mustDrop())
+						sendAndWatchMessage(rreq); // TODO **  
 				}
 			} else { // For Links:
-				if(agent.status.mustModify(rreq)){
+				if(agent.mustModify(rreq)){
 					Message modified = modifyMessage(rreq);
 					agent.sendFrame(wrapMessage(modified));
-				} else if (!agent.status.drop())
-					agent.sendFrame(wrapMessage(rreq)); // just forward the request
+				} else if (!agent.mustDrop())
+					sendAndWatchMessage(rreq); // TODO **
 			}
 
 			agent.process(rreq);// remember received rreq
@@ -159,16 +163,15 @@ public class FrameHandler {
 
 		if (agent.getId() == destination) { // I am the one who initiated the request
 
-			// DEBUG("Received ROUTE REPLY: " + rrep);
 			if (agent.getRole() == Role.Representative) {
 
 				// retrieve the data corresponding to the reply that just arrived
-				DataInfo dataInfo = agent.retrieveData(rrep.getRequestId());
+				WaitingDataInfo waitingDataInfo = agent.retrieveData(rrep.getRequestId());
 
-				if (dataInfo == null) // no data needs to be sent back
+				if (waitingDataInfo == null) // no data needs to be sent back
 					return;
 
-				MData mdata = dataInfo.getMdata();
+				MData mdata = waitingDataInfo.getMdata();
 				int finalDest = mdata.getDestination(); // final destination
 
 				List<Integer> route = rrep.getRoute(); // new route
@@ -183,32 +186,26 @@ public class FrameHandler {
 				}
 
 				// If the message was not sent already...
-				if (!dataInfo.isWasSent()) {
-					// Send the routed data, back to the source of the reply
-					// (representative of the destination)
+				if (!waitingDataInfo.isWasSent()) {
+					// Send the routed data, back to the source of the reply (representative of the destination)
 					MRoutedData rdata = new MRoutedData(agent.getId(), rrep.getSource(), mdata, route);
 
-					if(agent.status.mustModify(rrep)){
+					if(agent.mustModify(rrep)){
 						Message modified = modifyMessage(rrep);
 						agent.sendFrame(wrapMessage(modified));
-					} else if (!agent.status.drop()) {
-						agent.sendFrame(wrapMessage(rdata));
-						dataInfo.setWasSent(); // mark data as sent
-					}
-					// no notification needed here: it has already been sent in
-					// "SendPeriodicMeasures" behaviour
+					} else if (!agent.mustDrop()) 
+						sendAndWatchMessage(rdata); // TODO **
 				}
 
 			} else {
-				// there must be a mistake: only representatives can initiate
-				// route requests
+				// there must be a mistake: only representatives can initiate route requests
 			}
 		} else { // I am not the initiator of the request
-			if(agent.status.mustModify(rrep)){
+			if(agent.mustModify(rrep)){
 				Message modified = modifyMessage(rrep);
 				agent.sendFrame(wrapMessage(modified));
-			} else if (!agent.status.drop())
-				agent.sendFrame(wrapMessage(rrep)); // just forward the request
+			} else if (!agent.mustDrop()) 
+				sendAndWatchMessage(rrep); // TODO **
 		}
 	}
 
@@ -236,32 +233,29 @@ public class FrameHandler {
 					return;
 				} else {
 					if (agent.hasNeighbour(dataDest)) {
-						if(agent.status.mustModify(rdata)){
+						if(agent.mustModify(rdata)){
 							Message modified = modifyMessage(rdata);
 							agent.sendFrame(wrapMessage(modified));
-						} else if (!agent.status.drop())
+						} else if (!agent.mustDrop())
 							agent.sendFrame(wrapMessage(data)); // deliver the data to its actual destination
 					} else {
 						// there must be a mistake
 					}
 				}
 			} else { // ... destination is not a representative
-				// there must be a mistake: the destination of routed data may
-				// only be a Representative
+				// there must be a mistake: the destination of routed data may only be a Representative
 			}
 		} else { // The routed data has not reached its destination yet
-			if(agent.status.mustModify(rdata)){
+			if (agent.mustModify(rdata)) {
 				Message modified = modifyMessage(rdata);
-				agent.sendFrame(wrapMessage(modified));				
-			} else if (!agent.status.drop())
-				agent.sendFrame(wrapMessage(rdata)); // just forward the message
+				agent.sendFrame(wrapMessage(modified));
+			} else if (!agent.mustDrop())
+				sendAndWatchMessage(rdata); // TODO **
 		}
-
 	}
 
 	private void handleMessageData(MData data) {
 
-		// int source = data.getSource();
 		int destination = data.getDestination();
 
 		if (agent.getId() == destination) { // I message reached destination, I'm done
@@ -272,15 +266,15 @@ public class FrameHandler {
 
 				if (agent.hasNeighbour(destination)) {
 					// deliver message...				
-					if(agent.status.mustModify(data)){
+					if(agent.mustModify(data)){
 						Message modified = modifyMessage(data);
 						agent.sendFrame(wrapMessage(modified));
-					} else if (!agent.status.drop())						
-						agent.sendFrame(wrapMessage(data));
+					} else if (!agent.mustDrop())						
+						agent.sendFrame(wrapMessage(data)); // TODO: follow data
 				} else if (agent.hasRoute(destination)) {
 
 					// If I have a route...
-					RoutingInfo rinfo = agent.getRoutingInfo(destination);
+					RoutingTableEntry rinfo = agent.getRoutingInfo(destination);
 
 					List<Integer> route = rinfo.getRoute();
 					int repId = rinfo.getRepDest();
@@ -288,30 +282,23 @@ public class FrameHandler {
 					// send the data on that route
 					MRoutedData rdata = new MRoutedData(agent.getId(), repId, data, route);
 					
-					if(agent.status.mustModify(data)){
+					if(agent.mustModify(data)){
 						Message modified = modifyMessage(data);
 						agent.sendFrame(wrapMessage(modified));
-					}else if (!agent.status.drop())
-						agent.sendFrame(wrapMessage(rdata));
-
-					// no need for notification here: it has been sent from the
-					// "SendPeriodicMeasures" behaviour
-
-					// DEBUG("Have route...sending ROUTED DATA " + rdata);
-
+					}else if (!agent.mustDrop()) {
+						sendAndWatchMessage(rdata); // TODO **
+					}
 				} else { // If I don't have a route
 					int reqId = agent.generateRREQ(data.getDestination());
 					MRouteRequest rreq = new MRouteRequest(agent.getId(), destination,	reqId, new ArrayList<Integer>());
 
 					agent.process(rreq); // remember not to process again
-					agent.rememberData(rreq.getRequestId(), new DataInfo(data)); // remember what message to send
-					if(agent.status.mustModify(data)){
+					agent.rememberData(rreq.getRequestId(), new WaitingDataInfo(data)); // remember what message to send
+					if(agent.mustModify(data)){
 						Message modified = modifyMessage(data);
 						agent.sendFrame(wrapMessage(modified)); 
-					} else 	if (!agent.status.drop())
-						agent.sendFrame(wrapMessage(rreq));// search for route
-					// no need for notification here.
-					// DEBUG("No route...sending ROUTE REQUEST " + rreq);
+					} else 	if (!agent.mustDrop())
+						sendAndWatchMessage(rreq);// search for route					
 				}
 			} else {
 				// there must be a mistake, if I am not the destination nor a representative
@@ -364,28 +351,34 @@ public class FrameHandler {
 		return ok;
 	}
 	
-	private Message modifyMessage(Message message) {
-		if(message.getClass().equals(MRouteRequest.class)){
-			MRouteRequest rreq = (MRouteRequest) message;
+	public static Message modifyMessage(Message msg) {
+		if(msg.getClass().equals(MRouteRequest.class)){
+			MRouteRequest rreq = (MRouteRequest) msg;
 			rreq.setDestination(Sensor.generateFakeId());
 			return rreq;
-		} else if (message.getClass().equals(MRouteReply.class)){
-			MRouteReply rrep = (MRouteReply) message;
+		} else if (msg.getClass().equals(MRouteReply.class)){
+			MRouteReply rrep = (MRouteReply) msg;
 			rrep.setSource(Sensor.generateFakeId());
 			return rrep;
-		} else if (message.getClass().equals(MRoutedData.class)){
-			MRoutedData rdata = (MRoutedData) message;
+		} else if (msg.getClass().equals(MRoutedData.class)){
+			MRoutedData rdata = (MRoutedData) msg;
 			rdata.setDestination(Sensor.generateFakeId());
 			return rdata;
-		} else if (message.getClass().equals(MData.class)){
-			MData mdata = (MData) message;
+		} else if (msg.getClass().equals(MData.class)){
+			MData mdata = (MData) msg;
 			mdata.setDestination(Sensor.generateFakeId());
 			return mdata;
 		}
-		return message;		
+		return msg;		
 	}
 
-
+	private void matchMessage() {
+		WatchListEntry we = agent.getWatchedMessageEntry(message, fSender);
+		
+		if (we != null){
+			agent.removeFromWatchList(we);
+		}
+	}
 	/**
 	 * Builds a frame, according to the type of message.
 	 * 
@@ -536,5 +529,41 @@ public class FrameHandler {
 			}			
 		}
 		return relay;
+	}
+	
+	public void sendAndWatchMessage(Message message){
+		Frame frameToSend = wrapMessage(message);
+		
+		
+		if(agent.useTrust()){
+			int watchedNode = frameToSend.getReceiver();
+	
+			if(watchedNode > 0 && watchedNode != message.getDestination()){
+				int interactionNumber = agent.addToWatchList(message, watchedNode);
+				WatchListEntry we = new WatchListEntry(watchedNode, interactionNumber, message);
+				agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));					
+			} else if (watchedNode == Frame.BROADCAST_LINK){
+				List<Integer> watchedNodes = agent.getNeighbours(Role.Link);
+				watchedNodes.remove((Integer)fSender); // watch all nodes besides the one who sent the frame (if existent)
+				for(Integer wn : watchedNodes){
+					if (wn != message.getDestination()) {
+						int interactionNumber = agent.addToWatchList(message, wn);
+						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
+						agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));
+					}
+				}
+			} else if (watchedNode == Frame.BROADCAST_REPRESENTATIVE){
+				List<Integer> watchedNodes = agent.getNeighbours(Role.Representative);
+				watchedNodes.remove((Integer)fSender);
+				for(Integer wn : watchedNodes){
+					if (wn != message.getDestination()) {
+						int interactionNumber = agent.addToWatchList(message, wn);
+						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
+						agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));
+					}
+				}
+			}
+		}
+		agent.sendFrame(frameToSend); // just forward the request
 	}
 }

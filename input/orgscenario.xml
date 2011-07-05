@@ -46,7 +46,7 @@
 	<measures id="*" total="5" interval="100" issued="0"/>
 	
 	<!-- The specification of attacks follows: -->
-	<!-- attack type="nofwd" num="2" role="Link" issued="200" drop="0.9"/-->
+	<attack type="nofwd" num="2" role="Link" issued="10" probDrop="0.5"/>
 	<!-- attack type="fabricate" num="1" role="Representative" issued="1000" msgType="RouteReply" total="1" interval="1000" /-->	
 	<!-- attack type="modify" num="2" role="Representative" issued="100" msgType="Data" probMod="0.9"/-->
 		

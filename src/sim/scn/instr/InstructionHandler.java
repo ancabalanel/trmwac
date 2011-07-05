@@ -46,6 +46,9 @@ public class InstructionHandler {
 	private void handleInstructionFabricateMessage(FabricateMessageInstruction fabricate){
 		agent.sendNotification(new BecomeMaliciousEvent(agent.getId()));
 		agent.addBehaviour(new SendPeriodicFabricatedMessage(agent, fabricate.getInterval(),fabricate));
+		
+		agent.setUseTrust(false);
+		agent.setUseAuthorization(false);
 	}
 	
 	private void handleInstructionNoForward(NoForwardInstruction noFwd){
@@ -54,9 +57,11 @@ public class InstructionHandler {
 		if (agent.getSendMeasuresBehaviour() != null)
 			agent.getSendMeasuresBehaviour().stop();
 		
-		agent.status.setNofwd(true);
-		agent.status.setDropProb(noFwd.getDropProbability());
-
+		agent.setNofwd(true);
+		agent.setDropProb(noFwd.getDropProbability());
+		
+		agent.setUseTrust(false);
+		agent.setUseAuthorization(false);
 	}
 
 	private void handleModifyMessage(ModifyMessageInstruction modify) {
@@ -65,9 +70,12 @@ public class InstructionHandler {
 		if (agent.getSendMeasuresBehaviour() != null)
 			agent.getSendMeasuresBehaviour().stop();
 		
-		agent.status.setModifier(true);
-		agent.status.setModMsgType(modify.getMsgType());
-		agent.status.setModProb(modify.getModProb());
+		agent.setModifier(true);
+		agent.setModMsgType(modify.getMsgType());
+		agent.setModProb(modify.getModProb());
+		
+		agent.setUseTrust(false);
+		agent.setUseAuthorization(false);
 	}
 	
 }

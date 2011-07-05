@@ -48,12 +48,12 @@ public class Neighbourhood {
 
 	public boolean contains(int id) {
 
-		for (Neighbour nb : neighbours)
+		for (Neighbour nb : neighbours)	
 			if (nb.id == id)
 				return true;
 		return false;
 	}
-
+	
 	public int getLinkToRep(int repId) {
 		List<Integer> allLinksToRep = new ArrayList<Integer>();
 		for (Neighbour n : neighbours) {
@@ -64,9 +64,18 @@ public class Neighbourhood {
 		Collections.shuffle(allLinksToRep);
 		return allLinksToRep.get(0);
 	}
-
+	
 	public List<Neighbour> getNeighbours() {
 		return neighbours;
+	}
+
+	
+	public List<Integer> getNeighbours(Role role){
+		List<Integer> neighboursWithRole = new ArrayList<Integer>();
+		for(Neighbour n : neighbours)
+			if(n.role == role)
+				neighboursWithRole.add(n.id);
+		return neighboursWithRole;
 	}
 
 	public int getNumRepresentatives() {
@@ -75,6 +84,10 @@ public class Neighbourhood {
 			if (n.role == Role.Representative)
 				numR++;
 		return numR;
+	}
+
+	public int getOwner() {
+		return owner;
 	}
 
 	/**
@@ -103,10 +116,6 @@ public class Neighbourhood {
 		return Role.Unknown;
 	}
 
-	public int getOwner() {
-		return owner;
-	}
-
 	public int getSize() {
 		return neighbours.size();
 	}
@@ -122,6 +131,15 @@ public class Neighbourhood {
 		return neighbours.isEmpty();
 	}
 
+	public void modifyTrust(int id, float amount){
+		for(Neighbour n : neighbours){
+			if (n.id == id) {
+				n.setTrust(n.getTrust() + amount);
+				break;
+			}
+		}
+	}
+
 	public void setNeighbours(List<Neighbour> neighbours) {
 		this.neighbours = neighbours;
 	}
@@ -133,5 +151,14 @@ public class Neighbourhood {
 	@Override
 	public String toString() {
 		return "Neighbours of " + owner + ": " + neighbours;
+	}
+
+	public float getNeighbourTrust(int id) {
+		for(Neighbour n : neighbours){
+			if (n.id == id) {
+				return n.getTrust();
+			}
+		}
+		return -1.0f; // neighbour does not exist
 	}
 }

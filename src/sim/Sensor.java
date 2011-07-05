@@ -6,6 +6,7 @@ package sim;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.WakerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
 
@@ -16,17 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import mwac.DataInfo;
+import mwac.TrustManager;
+import mwac.WaitingDataInfo;
 import mwac.Groups;
 import mwac.Neighbourhood;
 import mwac.Role;
-import mwac.RoutingInfo;
+import mwac.RoutingTableEntry;
 import mwac.RoutingManager;
+import mwac.WatchListEntry;
 import mwac.msgs.Frame;
 import mwac.msgs.MData;
 import mwac.msgs.MRouteReply;
 import mwac.msgs.MRouteRequest;
 import mwac.msgs.MRoutedData;
+import mwac.msgs.Message;
 import sim.behaviours.MainLoop;
 import sim.behaviours.SendPeriodicMeasures;
 import sim.events.Event;
@@ -87,24 +91,38 @@ public class Sensor extends Agent {
 
 	private Neighbourhood neighbourhood;
 	private RoutingManager routingManager;
-	
-	
 
-	public Status status;
+	private Status status;
 	
-
-	private Map<Integer, DataInfo> mts;
-
+	/** All measurements of this agent */
 	private List<String> measuresToSend;
+	
+	/** Data waiting at representatives */
+	private Map<Integer, WaitingDataInfo> waitingData;
+	
+	/** Trust */
+	TrustManager trustManager;
 
-	SendPeriodicMeasures sendMeasuresBehaviour = null;
+	
+	private SendPeriodicMeasures sendMeasuresBehaviour = null;
 
 	public void addRoute(int dest, int repDest, List<Integer> route){
 		routingManager.addRoute(dest, repDest, route);
 	}
-	protected void DEBUG(String message) {
+	
+	public int addToWatchList(Message rrep, int watchedNode) {
+		int count = trustManager.incrementInteractionCount(watchedNode);
+		trustManager.add(new WatchListEntry(watchedNode, count, rrep));
+		return count;
+	}
+
+	public void DEBUG(String message) {
 		System.out.println(id + "\t" + message);
 	}
+
+
+	// AUXILIARY METHODS
+	
 
 	public void fabricateMessage(String msgType) {
 		
@@ -145,10 +163,6 @@ public class Sensor extends Agent {
 		}
 	}
 
-
-	// AUXILIARY METHODS
-	
-
 	public void generateMeasuresToSend(int num) {
 		for (int i = 0; i < num; i++)
 			getMeasuresToSend().add(id + "-measure-" + (i + 1));
@@ -158,19 +172,30 @@ public class Sensor extends Agent {
 		return routingManager.generateRREQ(destination);
 	}
 
+	public Groups getGroups(){
+		return groups;
+	}
+
 	public int getId() {
 		return id;
 	}
-
+	
 	public int getLinkToRepresentative(int rep){
 		return neighbourhood.getLinkToRep(rep);
 	}
-
+	
 	public List<String> getMeasuresToSend() {
 		return measuresToSend;
 	}
-
-
+	
+	public Role getNeighbourRole(int relay) {
+		return neighbourhood.getRole(relay);
+	}
+	
+	public List<Integer> getNeighbours(Role role){
+		return neighbourhood.getNeighbours(role);
+	}
+	
 	public int getRepresentative(){
 		return neighbourhood.getRepresentative();
 	}
@@ -179,41 +204,58 @@ public class Sensor extends Agent {
 		return role;
 	}
 
-	public Groups getGroups(){
-		return groups;
-	}
-	
-	public RoutingInfo getRoutingInfo(int dest){
+	public RoutingTableEntry getRoutingInfo(int dest){
 		return routingManager.getRoutingInfo(dest);
 	}
-	
+
 	public SendPeriodicMeasures getSendMeasuresBehaviour() {
 		return sendMeasuresBehaviour;
 	}
+	
+	public WatchListEntry getWatchedMessageEntry(Message message, int watchedNode) {
+		return trustManager.getWatchedMessage(message, watchedNode);
+	}
+	
 	public boolean hasNeighbour(int dest){
 		return neighbourhood.contains(dest);
 	}
 
+	public boolean hasProcessed(MRouteRequest rreq){
+		return routingManager.wasProcessed(rreq);
+	}
+	
 	public boolean hasRoute(int dest){
 		return routingManager.haveRoute(dest);
 	}
+
+	public void modifyTrust(int id, float amount){
+		neighbourhood.modifyTrust(id, amount);
+	}
 	
-	public boolean hasProcessed(MRouteRequest rreq){
-		return routingManager.wasProcessed(rreq);
+	public boolean mustDrop(){
+		return status.drop();
+	}
+	
+	public boolean mustModify(Message msg){
+		return status.mustModify(msg);
 	}
 	
 	public void process(MRouteRequest rreq){
 		routingManager.process(rreq);
 	}
 	
-	public void rememberData(int reqId, DataInfo dataInfo) {
-		mts.put(reqId, dataInfo);		
+	public void rememberData(int reqId, WaitingDataInfo waitingDataInfo) {
+		waitingData.put(reqId, waitingDataInfo);		
 	}
 	
-	public DataInfo retrieveData(int reqId){
-		return mts.get(reqId);
+	public boolean removeFromWatchList(WatchListEntry entry) {
+		return trustManager.removeFromWatchList(entry);
 	}
 	
+	public WaitingDataInfo retrieveData(int reqId){
+		return waitingData.get(reqId);
+	}
+
 	public void sendFrame(Frame frame){
 		ACLMessage aclMessage = new ACLMessage(ACLMessage.PROPAGATE);
 		aclMessage.addReceiver(simAgentAID);
@@ -240,22 +282,45 @@ public class Sensor extends Agent {
 		}
 	}
 
+	public void setAuthorization(boolean b){
+		status.setAuthorization(b);
+	}
+	
+	public void setDropProb(float dropProbability) {
+		status.setDropProb(dropProbability);
+	}
 	public void setMeasuresToSend(List<String> measuresToSend) {
 		this.measuresToSend = measuresToSend;
+	}
+	
+	public void setModifier(boolean b) {
+		status.setModifier(b);		
+	}
+
+	public void setModMsgType(String msgType) {
+		status.setModMsgType(msgType);	
+	}
+	public void setModProb(float modProb) {
+		status.setModProb(modProb);
+	}
+	
+	public void setNofwd(boolean b) {
+		status.setNofwd(b);
 	}
 	
 	public void setSendMeasuresBehaviour(SendPeriodicMeasures sendMeasuresBehaviour) {
 		this.sendMeasuresBehaviour = sendMeasuresBehaviour;
 	}
-
+	
 	@Override
 	protected void setup() {
 
 		this.id = Integer.parseInt(getLocalName());
 		this.routingManager = new RoutingManager();
 		this.setMeasuresToSend(new ArrayList<String>());
-		this.mts = new HashMap<Integer, DataInfo>();
-
+		this.waitingData = new HashMap<Integer, WaitingDataInfo>();
+		this.trustManager = new TrustManager(this);
+		
 		Object[] args = getArguments();
 
 		role = Role.valueOf((String) args[0]);
@@ -265,20 +330,47 @@ public class Sensor extends Agent {
 
 		status = new Status(this);
 		//status.authorization = true;
+		status.useTrust = true;
+		
+		if(id == 1){
+
+			addBehaviour(new WakerBehaviour(this, 2000) {
+				
+				@Override
+				protected void onWake() {
+
+				}
+			});
+		}
 		
 		addBehaviour(new MainLoop(this));
 		
 	}
+	public void setUseAuthorization(boolean b) {
+		status.setAuthorization(b);
+	}	
 	
+	public void setUseTrust(boolean b){
+		status.setUseTrust(b);
+	}
 	@Override
 	protected void takeDown() {
 		super.takeDown();
 	}
-	public Role getNeighbourRole(int relay) {
-		return neighbourhood.getRole(relay);
-	}
 	
+	public boolean useAuthorization(){
+		return status.authorization;
+	}
 	public boolean usesAuthorization(){
 		return status.authorization;
+	}
+	public boolean useTrust(){
+		return status.useTrust;
+	}
+	public void decreaseTrust(int watchedNode, float amount) {
+		trustManager.decreaseTrust(watchedNode, amount);
+	}
+	public float getNeighbourTrust(int id) {
+		return neighbourhood.getNeighbourTrust(id);
 	}
 }

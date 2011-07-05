@@ -21,13 +21,15 @@ public class Report {
 	
 	Map<Integer, List<String>> agentSentMeasures;
 	Map<Integer, List<String>> agentReceivedMeasures;
+	Map<Integer, List<Integer>> distrustMap;
 	
-	int totalFramesSent = 0;
-	int totalFramesReceived = 0;
+	int totalFramesSent;
+	int totalFramesReceived;
 	
-	int numMaliciousAgents = 0;
-	int numCorruptedRouteEvents = 0;
-	int unauthorizedMessages = 0;
+	List<Integer> malicious;
+	
+	int numCorruptedRouteEvents;
+	int unauthorizedMessages;
 	
 	private PrintWriter out;
 	
@@ -35,6 +37,14 @@ public class Report {
 		
 		agentSentMeasures = new HashMap<Integer, List<String>>();
 		agentReceivedMeasures = new HashMap<Integer, List<String>>();
+		distrustMap = new HashMap<Integer, List<Integer>>();
+		malicious = new ArrayList<Integer>();
+		
+		totalFramesReceived = 0;
+		totalFramesSent = 0;
+		
+		numCorruptedRouteEvents = 0;
+		unauthorizedMessages = 0;
 		
 		try {
 			out = new PrintWriter(new File(htmlFile));		
@@ -81,7 +91,7 @@ public class Report {
 	}
 	
 	public void addMaliciousAgent(int source){
-		numMaliciousAgents++;
+		malicious.add(source);
 	}
 	
 	public void addCorruptedRoute(int source, List<Integer> route, int sender){
@@ -116,18 +126,36 @@ public class Report {
 	public void close(){
 		if (out != null) {
 			// write results
-			out.println("Number of malicious agents: " + numMaliciousAgents);
-			out.println();
-			out.println("Total measures sent: " + getTotalMeasuresSent());
-			out.println("Total measures received: " + getTotalMeasuresReceived());
-			out.println("Lost:\t\t\t\t" + computeLostPercentage() + "%");
-			out.println();
-			out.println("Total frames sent: " + totalFramesSent);
-			out.println("Total frames received: " + totalFramesReceived);
+			out.println("<html>");
+	
+			out.println("There are " + malicious.size() + " malicious agents: " + malicious);
+			String table = "<table> " +
+					
+					"<tr> " + "<td> Sent measures </td>" + "<td>" + getTotalMeasuresSent() + "</td></tr>" +
+					"<tr> " + "<td> Received measures </td>" + "<td>" + getTotalMeasuresReceived() + "</td></tr>" +
+					"<tr> " + "<td> Lost percentage </td>" + "<td>" + computeLostPercentage() + " %&nbsp</td></tr>" +
+					"<tr> " + "<td>  </td> <td> </td></tr>" +
+					"<tr> " + "<td> Sent frames </td>" + "<td>" + totalFramesSent + " </td></tr>" +
+					"<tr> " + "<td> Received frames </td>" + "<td>" + totalFramesReceived + "</td></tr>" +
+					"</table>";
 			
-		
-			// close file
+			out.println(table);
+			
+			out.println("</br>");
+			out.println("Distrust map </ br>" + distrustMap);
+			out.println("</html>");
 			out.close();
 		}
+	}
+
+	public void addDistrustNode(int source, int neighbour) {
+		List<Integer> nbIds; 
+		if (distrustMap.containsKey(source)) {
+			nbIds = distrustMap.get(source);
+		} else {
+			nbIds = new ArrayList<Integer>();			
+		}
+		nbIds.add(neighbour);
+		distrustMap.put(source, nbIds);	
 	}
 }
