@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+	<organization stable="true">
+		<node id="1" x="433" y="290" range="60" role=" Simple">
+			<group id="5" />
+		</node>
+		<node id="2" x="438" y="265" range="60" role=" Link">
+			<group id="8" />
+			<group id="5" />
+			<group id="11" />
+		</node>
+		<node id="3" x="406" y="266" range="60" role=" Link">
+			<group id="5" />
+			<group id="11" />
+			<group id="8" />
+		</node>
+		<node id="4" x="400" y="298" range="60" role=" Simple">
+			<group id="5" />
+		</node>
+		<node id="5" x="426" y="318" range="60" role=" Representative" />
+		<node id="6" x="465" y="313" range="60" role=" Link">
+			<group id="5" />
+			<group id="17" />
+			<group id="34" />
+		</node>
+		<node id="7" x="469" y="268" range="60" role=" Link">
+			<group id="8" />
+			<group id="17" />
+		</node>
+		<node id="8" x="454" y="231" range="60" role=" Representative" />
+		<node id="9" x="420" y="240" range="60" role=" Link">
+			<group id="8" />
+			<group id="11" />
+		</node>
+		<node id="10" x="365" y="261" range="60" role=" Link">
+			<group id="11" />
+			<group id="25" />
+		</node>
+		<node id="11" x="388" y="237" range="60" role=" Representative" />
+		<node id="12" x="372" y="297" range="60" role=" Link">
+			<group id="5" />
+			<group id="25" />
+		</node>
+		<node id="13" x="384" y="336" range="60" role=" Link">
+			<group id="5" />
+			<group id="22" />
+		</node>
+		<node id="14" x="424" y="347" range="60" role=" Link">
+			<group id="5" />
+			<group id="22" />
+		</node>
+		<node id="15" x="460" y="351" range="60" role=" Link">
+			<group id="5" />
+			<group id="34" />
+		</node>
+		<node id="16" x="484" y="330" range="60" role=" Link">
+			<group id="5" />
+			<group id="17" />
+			<group id="34" />
+		</node>
+		<node id="17" x="493" y="298" range="60" role=" Representative" />
+		<node id="18" x="497" y="256" range="60" role=" Link">
+			<group id="8" />
+			<group id="17" />
+			<group id="30" />
+		</node>
+		<node id="19" x="494" y="231" range="60" role=" Link">
+			<group id="8" />
+			<group id="30" />
+		</node>
+		<node id="20" x="445" y="371" range="60" role=" Link">
+			<group id="5" />
+			<group id="34" />
+		</node>
+		<node id="21" x="406" y="373" range="60" role=" Link">
+			<group id="5" />
+			<group id="22" />
+		</node>
+		<node id="22" x="374" y="362" range="60" role=" Representative" />
+		<node id="23" x="363" y="337" range="60" role=" Simple">
+			<group id="22" />
+		</node>
+		<node id="24" x="351" y="307" range="60" role=" Link">
+			<group id="22" />
+			<group id="25" />
+		</node>
+		<node id="25" x="340" y="274" range="60" role=" Representative" />
+		<node id="26" x="352" y="234" range="60" role=" Link">
+			<group id="11" />
+			<group id="25" />
+			<group id="48" />
+		</node>
+		<node id="27" x="386" y="214" range="60" role=" Link">
+			<group id="11" />
+			<group id="48" />
+		</node>
+		<node id="28" x="428" y="215" range="60" role=" Link">
+			<group id="11" />
+			<group id="8" />
+		</node>
+		<node id="29" x="472" y="210" range="60" role=" Link">
+			<group id="8" />
+			<group id="30" />
+		</node>
+		<node id="30" x="524" y="215" range="60" role=" Representative" />
+		<node id="31" x="522" y="251" range="60" role=" Link">
+			<group id="17" />
+			<group id="30" />
+			<group id="38" />
+		</node>
+		<node id="32" x="522" y="285" range="60" role=" Link">
+			<group id="17" />
+			<group id="38" />
+		</node>
+		<node id="33" x="523" y="319" range="60" role=" Link">
+			<group id="17" />
+			<group id="34" />
+			<group id="38" />
+		</node>
+		<node id="34" x="502" y="358" range="60" role=" Representative" />
+		<node id="35" x="478" y="376" range="60" role=" Simple">
+			<group id="34" />
+		</node>
+		<node id="36" x="537" y="364" range="60" role=" Simple">
+			<group id="34" />
+		</node>
+		<node id="37" x="547" y="322" range="60" role=" Link">
+			<group id="17" />
+			<group id="34" />
+			<group id="38" />
+		</node>
+		<node id="38" x="553" y="289" range="60" role=" Representative" />
+		<node id="39" x="556" y="267" range="60" role=" Simple">
+			<group id="38" />
+		</node>
+		<node id="40" x="555" y="236" range="60" role=" Link">
+			<group id="38" />
+			<group id="30" />
+		</node>
+		<node id="41" x="556" y="218" range="60" role=" Simple">
+			<group id="30" />
+		</node>
+		<node id="42" x="544" y="179" range="60" role=" Simple">
+			<group id="30" />
+		</node>
+		<node id="43" x="508" y="184" range="60" role=" Simple">
+			<group id="30" />
+		</node>
+		<node id="44" x="474" y="185" range="60" role=" Link">
+			<group id="8" />
+			<group id="30" />
+		</node>
+		<node id="45" x="443" y="182" range="60" role=" Simple">
+			<group id="8" />
+		</node>
+		<node id="46" x="406" y="185" range="60" role=" Simple">
+			<group id="11" />
+		</node>
+		<node id="47" x="364" y="188" range="60" role=" Link">
+			<group id="11" />
+			<group id="48" />
+		</node>
+		<node id="48" x="336" y="206" range="60" role=" Representative" />
+		<node id="49" x="322" y="243" range="60" role=" Link">
+			<group id="48" />
+			<group id="25" />
+		</node>
+		<node id="50" x="312" y="275" range="60" role=" Simple">
+			<group id="25" />
+		</node>
+		<node id="51" x="321" y="312" range="60" role=" Simple">
+			<group id="25" />
+		</node>
+		<node id="52" x="331" y="346" range="60" role=" Simple">
+			<group id="22" />
+		</node>
+	</organization>
+
+	<workstation id="1" />
+	<!-- The default behaviour of nodes: -->
+	<measures id="*" total="2" interval="1000" issued="0"/>
+	<!-- The specification of attacks follows: -->
+	<!-- attack type="fabricate" num="1" role="Simple" issued="2000" msgType="Data" total="5" interval="1000" /-->
+	<!-- attack type="nofwd" num="1" role="Representative" issued="200" probDrop="0.9"/ -->
+	<!-- attack type="modify" num="1" role="Representative" issued="2000" msgType="RouteReply" probMod="0.5"/-->
+
+</scenario>

@@ -6,7 +6,6 @@ package sim;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.WakerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
 
@@ -17,13 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import mwac.TrustManager;
-import mwac.WaitingDataInfo;
 import mwac.Groups;
 import mwac.Neighbourhood;
 import mwac.Role;
-import mwac.RoutingTableEntry;
 import mwac.RoutingManager;
+import mwac.RoutingTableEntry;
+import mwac.TrustManager;
+import mwac.WaitingDataInfo;
 import mwac.WatchListEntry;
 import mwac.msgs.Frame;
 import mwac.msgs.MData;
@@ -33,6 +32,7 @@ import mwac.msgs.MRoutedData;
 import mwac.msgs.Message;
 import sim.behaviours.MainLoop;
 import sim.behaviours.SendPeriodicMeasures;
+import sim.eval.Parameters;
 import sim.events.Event;
 import sim.scn.instr.Instruction;
 
@@ -62,25 +62,6 @@ import sim.scn.instr.Instruction;
  */
 @SuppressWarnings("serial")
 public class Sensor extends Agent {
-
-
-	/** used by malicious agents to generate fake ids and routes */
-	private static int UNKNOWN_ID = 100;
-	/** used by malicious agents to generate fake ids and routes */
-	static Random random = new Random();
-
-	
-	public static int generateFakeId(){
-		return UNKNOWN_ID + random.nextInt(100);
-	}	
-	public static List<Integer> generateFakeRoute(){
-		List<Integer> fRoute = new ArrayList<Integer>();
-		int length = random.nextInt(10);
-		for (int i = 0; i < length; i++){
-			fRoute.add(random.nextInt(UNKNOWN_ID));
-		}
-		return fRoute;
-	}
 	
 	AID simAgentAID; // simulation agent id
 	
@@ -112,7 +93,9 @@ public class Sensor extends Agent {
 	
 	public int addToWatchList(Message rrep, int watchedNode) {
 		int count = trustManager.incrementInteractionCount(watchedNode);
-		trustManager.add(new WatchListEntry(watchedNode, count, rrep));
+		WatchListEntry we = new WatchListEntry(watchedNode, count, rrep); 
+		trustManager.add(we);
+		DEBUG("ADDING TO WATCHLIST... " +  we);
 		return count;
 	}
 
@@ -124,6 +107,10 @@ public class Sensor extends Agent {
 	// AUXILIARY METHODS
 	
 
+	public void decreaseTrust(int watchedNode, float amount) {
+		trustManager.decreaseTrust(watchedNode, amount);
+	}
+
 	public void fabricateMessage(String msgType) {
 		
 		// these are not to be changed
@@ -131,28 +118,28 @@ public class Sensor extends Agent {
 		int receiver = Frame.BROADCAST;
 		
 		
-		int source = random.nextDouble() < 0.5 ? id : generateFakeId();
-		int destination = generateFakeId();
+		int source = Parameters.random.nextDouble() < 0.5 ? id : Parameters.generateFakeId();
+		int destination = Parameters.generateFakeId();
 		
 		if (msgType.equals("RouteRequest")) {
 			
-			int requestId = generateFakeId();
-			List<Integer> route = random.nextDouble() < 0.5 ? new ArrayList<Integer>() : generateFakeRoute();
+			int requestId = Parameters.generateFakeId();
+			List<Integer> route = Parameters.random.nextDouble() < 0.5 ? new ArrayList<Integer>() : Parameters.generateFakeRoute();
 			
 			MRouteRequest rreq = new MRouteRequest(source, destination,	requestId, route);
 			sendFrame(new Frame(sender, receiver, rreq));
 
 		} else if (msgType.equals("RouteReply")) {
 			
-			int requestId = generateFakeId();
-			List<Integer> route = generateFakeRoute();
+			int requestId = Parameters.generateFakeId();
+			List<Integer> route = Parameters.generateFakeRoute();
 
 			MRouteReply rrep = new MRouteReply(source, destination, requestId,	route);
 			sendFrame(new Frame(sender, receiver, rrep));
 			
 		} else if (msgType.equals("RoutedData")) {
 			MData data = new MData(source, destination, "fabricated");
-			List<Integer> route = generateFakeRoute();
+			List<Integer> route = Parameters.generateFakeRoute();
 			
 			MRoutedData rdata = new MRoutedData(source, destination, data,	route);
 			sendFrame(new Frame(sender, Frame.BROADCAST, rdata));
@@ -175,7 +162,7 @@ public class Sensor extends Agent {
 	public Groups getGroups(){
 		return groups;
 	}
-
+	
 	public int getId() {
 		return id;
 	}
@@ -195,7 +182,11 @@ public class Sensor extends Agent {
 	public List<Integer> getNeighbours(Role role){
 		return neighbourhood.getNeighbours(role);
 	}
-	
+
+	public float getNeighbourTrust(int id) {
+		return neighbourhood.getNeighbourTrust(id);
+	}
+
 	public int getRepresentative(){
 		return neighbourhood.getRepresentative();
 	}
@@ -203,11 +194,11 @@ public class Sensor extends Agent {
 	public Role getRole() {
 		return role;
 	}
-
+	
 	public RoutingTableEntry getRoutingInfo(int dest){
 		return routingManager.getRoutingInfo(dest);
 	}
-
+	
 	public SendPeriodicMeasures getSendMeasuresBehaviour() {
 		return sendMeasuresBehaviour;
 	}
@@ -215,19 +206,19 @@ public class Sensor extends Agent {
 	public WatchListEntry getWatchedMessageEntry(Message message, int watchedNode) {
 		return trustManager.getWatchedMessage(message, watchedNode);
 	}
-	
+
 	public boolean hasNeighbour(int dest){
 		return neighbourhood.contains(dest);
 	}
-
+	
 	public boolean hasProcessed(MRouteRequest rreq){
 		return routingManager.wasProcessed(rreq);
 	}
-	
+
 	public boolean hasRoute(int dest){
 		return routingManager.haveRoute(dest);
 	}
-
+	
 	public void modifyTrust(int id, float amount){
 		neighbourhood.modifyTrust(id, amount);
 	}
@@ -248,6 +239,10 @@ public class Sensor extends Agent {
 		waitingData.put(reqId, waitingDataInfo);		
 	}
 	
+	public void removeAllThatMatch(Message message){
+		trustManager.removeAllThatMatch(message);
+	}
+
 	public boolean removeFromWatchList(WatchListEntry entry) {
 		return trustManager.removeFromWatchList(entry);
 	}
@@ -281,7 +276,6 @@ public class Sensor extends Agent {
 			e.printStackTrace();
 		}
 	}
-
 	public void setAuthorization(boolean b){
 		status.setAuthorization(b);
 	}
@@ -289,17 +283,18 @@ public class Sensor extends Agent {
 	public void setDropProb(float dropProbability) {
 		status.setDropProb(dropProbability);
 	}
+
 	public void setMeasuresToSend(List<String> measuresToSend) {
 		this.measuresToSend = measuresToSend;
 	}
-	
 	public void setModifier(boolean b) {
 		status.setModifier(b);		
 	}
-
+	
 	public void setModMsgType(String msgType) {
 		status.setModMsgType(msgType);	
 	}
+	
 	public void setModProb(float modProb) {
 		status.setModProb(modProb);
 	}
@@ -307,10 +302,9 @@ public class Sensor extends Agent {
 	public void setNofwd(boolean b) {
 		status.setNofwd(b);
 	}
-	
 	public void setSendMeasuresBehaviour(SendPeriodicMeasures sendMeasuresBehaviour) {
 		this.sendMeasuresBehaviour = sendMeasuresBehaviour;
-	}
+	}	
 	
 	@Override
 	protected void setup() {
@@ -329,26 +323,15 @@ public class Sensor extends Agent {
 		simAgentAID = new AID((String) args[3], AID.ISLOCALNAME);
 
 		status = new Status(this);
-		//status.authorization = true;
-		status.useTrust = true;
-		
-		if(id == 1){
-
-			addBehaviour(new WakerBehaviour(this, 2000) {
-				
-				@Override
-				protected void onWake() {
-
-				}
-			});
-		}
+		status.authorization = Parameters.USE_AUTHORIZATION;
+		status.useTrust = Parameters.USE_TRUST;
 		
 		addBehaviour(new MainLoop(this));
 		
 	}
 	public void setUseAuthorization(boolean b) {
 		status.setAuthorization(b);
-	}	
+	}
 	
 	public void setUseTrust(boolean b){
 		status.setUseTrust(b);
@@ -357,7 +340,6 @@ public class Sensor extends Agent {
 	protected void takeDown() {
 		super.takeDown();
 	}
-	
 	public boolean useAuthorization(){
 		return status.authorization;
 	}
@@ -366,11 +348,5 @@ public class Sensor extends Agent {
 	}
 	public boolean useTrust(){
 		return status.useTrust;
-	}
-	public void decreaseTrust(int watchedNode, float amount) {
-		trustManager.decreaseTrust(watchedNode, amount);
-	}
-	public float getNeighbourTrust(int id) {
-		return neighbourhood.getNeighbourTrust(id);
 	}
 }

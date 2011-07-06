@@ -14,6 +14,7 @@ import mwac.msgs.MRouteRequest;
 import mwac.msgs.MRoutedData;
 import mwac.msgs.Message;
 import sim.Sensor;
+import sim.eval.Parameters;
 import sim.events.DistrustNeighbourEvent;
 
 /**
@@ -57,8 +58,7 @@ public class TrustManager {
 				msgd = (MData) msg1;
 				if (msg2 instanceof MRouteRequest){
 					msg1r = (MRouteRequest) msg2;
-					return msgd.getSource() == msg1r.getSource()
-							&& msg2.getDestination() == msg1r.getDestination();
+					return msgd.getDestination() == msg1r.getDestination();
 				} else if (msg2 instanceof MRoutedData){
 					msgr = (MRoutedData) msg2;
 					return msgd.getSource() == msgr.getData().getSource()
@@ -69,8 +69,7 @@ public class TrustManager {
 				msgd = (MData) msg2;
 				if (msg1 instanceof MRouteRequest){
 					msg1r = (MRouteRequest) msg1;
-					return msgd.getSource() == msg1r.getSource()
-							&& msg1.getDestination() == msg1r.getDestination();
+					return msgd.getDestination() == msg1r.getDestination();
 				} else if (msg1 instanceof MRoutedData){
 					msgr = (MRoutedData) msg1;
 					return msgd.getSource() == msgr.getData().getSource()
@@ -92,17 +91,7 @@ public class TrustManager {
 		}
 	}
 
-	/** Trust threshold */
-	public final static float TRUST_THRESHOLD = 0.6f;
-
-	/** Trust recovery parameter */
-	public static final float LAMBDA = 0.1f;
 	
-	/** Default time (ms) to listen to a message */
-	public static final long WATCH_TIME = 1000;
-
-	/** decrease step */
-	public static final float DECREASE_STEP = 0.1f;
 	
 	/** Managed agent */
 	Sensor agent;
@@ -125,10 +114,10 @@ public class TrustManager {
 		watchList.add(we);
 	}
 	public void decreaseTrust(int id, float amount) {
-		if (agent.getNeighbourTrust(id) > TRUST_THRESHOLD) {
+		if (agent.getNeighbourTrust(id) > Parameters.TRUST_THRESHOLD) {
 			agent.modifyTrust(id, -amount);
 
-			if (agent.getNeighbourTrust(id) < TRUST_THRESHOLD){
+			if (agent.getNeighbourTrust(id) < Parameters.TRUST_THRESHOLD){
 				agent.sendNotification(new DistrustNeighbourEvent(agent.getId(), id));
 				
 			}
@@ -162,6 +151,15 @@ public class TrustManager {
 
 	public boolean removeFromWatchList(WatchListEntry entry) {
 		return watchList.remove(entry);
+	}
+	
+	public void removeAllThatMatch(Message msg){
+		List<WatchListEntry> toRemove = new ArrayList<WatchListEntry>();
+		for(WatchListEntry we : watchList)
+			if(match(we.getMessage(), msg))
+				toRemove.add(we);
+		
+		watchList.removeAll(toRemove);
 	}
 	
 	public void trustRecovery() {

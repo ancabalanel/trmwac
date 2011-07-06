@@ -3,6 +3,8 @@
  */
 package sim.events;
 
+import mwac.NeighbourTrust;
+
 /**
  * @author Anca
  *
@@ -10,15 +12,14 @@ package sim.events;
 @SuppressWarnings("serial")
 public class TrustDecreasedEvent extends Event {
 
-	int watchedNode;
+	NeighbourTrust nbTrust; 
 	
-	public TrustDecreasedEvent(int source, int watched) {
+	public TrustDecreasedEvent(int source, NeighbourTrust nbTrust) {
 		super(source);
-		this.watchedNode = watched;
+		this.nbTrust = nbTrust;
 	}
 
-	public int getWatchedNode() {
-		return watchedNode;
+	public NeighbourTrust getNbTrust() {
+		return nbTrust;
 	}
-
 }

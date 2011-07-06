@@ -37,4 +37,11 @@ public class WaitingDataInfo {
 	public boolean isWasSent() {
 		return wasSent;
 	}
+
+	@Override
+	public String toString() {
+		return "WaitingDataInfo [mdata=" + mdata + "]";
+	}
+	
+	
 }

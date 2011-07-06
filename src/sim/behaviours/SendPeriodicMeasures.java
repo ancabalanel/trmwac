@@ -5,17 +5,15 @@ import jade.core.behaviours.TickerBehaviour;
 import java.util.ArrayList;
 import java.util.List;
 
-import mwac.FrameHandler;
 import mwac.Role;
-import mwac.TrustManager;
 import mwac.WaitingDataInfo;
 import mwac.WatchListEntry;
 import mwac.msgs.Frame;
 import mwac.msgs.MData;
 import mwac.msgs.MRouteRequest;
 import mwac.msgs.MRoutedData;
-import mwac.msgs.Message;
 import sim.Sensor;
+import sim.eval.Parameters;
 import sim.events.SentMeasureEvent;
 
 /**
@@ -55,7 +53,8 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 					// if i have a route
 					if (agent.hasRoute(destination)) { 
 						List<Integer> route = agent.getRoutingInfo(destination).getRoute();
-						MRoutedData rdata = new MRoutedData(agent.getId(), destination, mdata, route);
+						int repDestination = agent.getRoutingInfo(destination).getRepDest();
+						MRoutedData rdata = new MRoutedData(agent.getId(), repDestination, mdata, route);
 
 						// ... send the data on that route, and notify the sim agent
 						
@@ -64,18 +63,21 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 							nextHop = rdata.getDestination();
 						else
 							nextHop = route.get(0);
+						try {
 						int fReceiver = agent.getLinkToRepresentative(nextHop);
-					
+						
 						agent.sendFrame(new Frame(agent.getId(), fReceiver, rdata));
+						
 						if(agent.useTrust()){
 							int interactionNumber = agent.addToWatchList(rdata, fReceiver);
 							WatchListEntry we = new WatchListEntry(fReceiver, interactionNumber, rdata);
 							
-							agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));			
+							agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));			
 						}
 						agent.sendNotification(new SentMeasureEvent(agent.getId(), mdata.getData()));
-
-						
+						} catch (Exception e) {
+							agent.DEBUG(" NEXT HOP IS " + nextHop);
+						}						
 
 					} else { // if i don't have a route ...
 
@@ -87,16 +89,16 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 																
 						agent.process(rreq); // remember request id
 						
-						if(agent.useTrust()){
+						/*if(agent.useTrust()){
 							List<Integer> watchedNodes = agent.getNeighbours(Role.Link);
 							// watch all nodes besides the one who sent the frame (if it is in the list)
 							watchedNodes.remove((Integer) mdata.getSource()); 
 							for(Integer wn : watchedNodes){
 								int interactionNumber = agent.addToWatchList(rreq, wn);
 								WatchListEntry we = new WatchListEntry(wn, interactionNumber, rreq);
-								agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));
+								agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
 							}
-						}
+						}*/
 						
 						agent.sendFrame(new Frame(agent.getId(), Frame.BROADCAST_LINK, rreq));
 						agent.sendNotification(new SentMeasureEvent(agent.getId(), mdata.getData())); // notify sim agent
@@ -109,7 +111,7 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 						int interactionNumber = agent.addToWatchList(mdata, representative);
 						WatchListEntry we = new WatchListEntry(representative, interactionNumber, mdata);
 						
-						agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));			
+						agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));			
 					}
 					
 					// ... send data to my representative agent 

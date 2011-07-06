@@ -1,6 +1,7 @@
 package sim;
 
 import mwac.msgs.Message;
+import sim.eval.Parameters;
 
 /**
  * The <code>Status</code> class maintains the status of a
@@ -51,7 +52,7 @@ public class Status {
 	 */
 	public boolean drop() {
 		if(nofwd)
-			return Sensor.random.nextFloat() < dropProb;
+			return Parameters.random.nextFloat() < dropProb;
 		else
 			return false;
 	}
@@ -68,7 +69,7 @@ public class Status {
 	public boolean mustModify(Message msg){
 		if(modifier)
 			if(msg.getClass().getName().equals(modMsgType))
-				return Sensor.random.nextFloat() < modProb;
+				return Parameters.random.nextFloat() < modProb;
 			else
 				return false;
 		else

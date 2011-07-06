@@ -16,6 +16,7 @@ import mwac.msgs.MRoutedData;
 import mwac.msgs.Message;
 import sim.Sensor;
 import sim.behaviours.WatchListRemoverBehaviour;
+import sim.eval.Parameters;
 import sim.events.CorruptedRouteEvent;
 import sim.events.ReceivedFrameEvent;
 import sim.events.ReceivedMeasureEvent;
@@ -34,17 +35,37 @@ import sim.events.UnauthorizedMessageEvent;
  */
 public class FrameHandler {
 
-	Sensor agent;
-	Frame frame;
-
-	Message message;
+	public static Message modifyMessage(Message msg) {
+		if(msg.getClass().equals(MRouteRequest.class)){
+			MRouteRequest rreq = (MRouteRequest) msg;
+			rreq.setDestination(Parameters.generateFakeId());
+			return rreq;
+		} else if (msg.getClass().equals(MRouteReply.class)){
+			MRouteReply rrep = (MRouteReply) msg;
+			rrep.setSource(Parameters.generateFakeId());
+			return rrep;
+		} else if (msg.getClass().equals(MRoutedData.class)){
+			MRoutedData rdata = (MRoutedData) msg;
+			rdata.setDestination(Parameters.generateFakeId());
+			return rdata;
+		} else if (msg.getClass().equals(MData.class)){
+			MData mdata = (MData) msg;
+			mdata.setDestination(Parameters.generateFakeId());
+			return mdata;
+		}
+		return msg;		
+	}
 	
+	Sensor agent;
+
+	Frame frame;	
 	int fSender;
 	int fReceiver;
-
-	int mSource;
-	int mDestination;
 	
+	Message message;
+	int mSource;	
+	int mDestination;
+
 	public FrameHandler(Sensor sensor, Frame f) {
 		this.agent = sensor;
 		this.frame = f;
@@ -61,6 +82,7 @@ public class FrameHandler {
 
 		if (agent.useTrust()) {
 			matchMessage();
+			
 			if (intendedReceiver())
 				handleMessage();
 		} else if (intendedReceiver())
@@ -68,18 +90,132 @@ public class FrameHandler {
 
 	}
 
-	private boolean intendedReceiver() {
-		return frame.getReceiver() == agent.getId()
-				|| frame.getReceiver() == Frame.BROADCAST
-				|| ((agent.getRole() == Role.Representative) && (frame.getReceiver() == Frame.BROADCAST_REPRESENTATIVE))
-				|| ((agent.getRole() == Role.Link) && (frame.getReceiver() == Frame.BROADCAST_LINK));
+	private boolean authorizeMessage() {
+		boolean ok = true;
+		Role sourceRole = agent.getNeighbourRole(mSource);
+		Role senderRole = agent.getNeighbourRole(fSender);
+		
+		if (message instanceof MData) {
+			if (agent.getRole() == Role.Simple || agent.getRole() == Role.Link) {
+				ok = (message.getDestination() == agent.getId() && (message.getSource() == fSender || (sourceRole == Role.Unknown && senderRole == Role.Representative)));
+			} else if (agent.getRole() == Role.Representative) { 
+				ok = (message.getSource() == fSender);
+			}
+		} else if (message instanceof MRoutedData) {
+			if(agent.getRole() == Role.Simple)
+				ok = false;
+			else if (agent.getRole() == Role.Link) {
+				ok = !((message.getDestination() == agent.getId())
+						|| (senderRole == Role.Simple) || (senderRole == Role.Link));
+			} else if (agent.getRole() == Role.Representative) {
+				ok = !(senderRole == Role.Simple || (senderRole == Role.Link && sourceRole != Role.Unknown));
+			}
+		} else if (message instanceof MRouteRequest || message instanceof MRouteReply) {
+			if(agent.getRole() == Role.Simple){
+				ok = false;
+			} else if (agent.getRole() == Role.Link){
+				ok = (senderRole == Role.Representative) && (message.getSource() == fSender || sourceRole == Role.Unknown || sourceRole == Role.Representative);
+			} else if (agent.getRole() == Role.Representative){
+				ok = (senderRole == Role.Link) && (sourceRole == Role.Unknown);
+			}
+		} 
+	
+		return ok;
+	}
+
+	private int getRelayRData(MRoutedData rdata) {
+		List<Integer> route = rdata.getRoute();
+		int relay;
+
+		if (route.isEmpty()) {
+			relay = rdata.getDestination();
+		} else {
+			int index;
+
+			if (agent.getRole() == Role.Representative)
+				index = route.indexOf(agent.getId());
+			else
+				index = route.indexOf(fSender);
+			if (index == -1)
+				relay = route.get(0);
+			else if (index < route.size() - 1)
+				relay = route.get(index + 1);
+			else
+				relay = rdata.getDestination();
+		}
+
+		if (agent.getRole() == Role.Representative){ 
+			try {
+				relay = agent.getLinkToRepresentative(relay);
+			} catch (Exception e) {
+				if(agent.usesAuthorization())
+					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rdata.getClass().getName(), rdata.getSource(), fSender));
+				else 
+					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));
+			}
+		} else if (agent.getRole() == Role.Link) {
+			Role relayRole = agent.getNeighbourRole(relay);
+			if(relayRole != Role.Representative) {
+				if(agent.usesAuthorization())
+					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rdata.getClass().getName(), rdata.getSource(),fSender));
+				else 
+					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));				
+				return -1;
+			}			
+		}
+		return relay;
+	}
+
+	private int getRelayRREP(MRouteReply rrep) {
+		List<Integer> route = rrep.getRoute();
+		int relay;
+
+		if (route.isEmpty())
+			relay = rrep.getDestination();
+		else {
+			int index;
+			if (agent.getRole() == Role.Representative)
+				index = route.indexOf(agent.getId());
+			else
+				index = route.indexOf(fSender);
+			
+			
+
+			if (index == -1) {
+				relay = route.get(route.size() - 1);
+			} else if (index > 0)
+				relay = route.get(index - 1);
+			else
+				relay = rrep.getDestination();
+		}
+
+		if (agent.getRole() == Role.Representative){ 
+			try {
+				relay = agent.getLinkToRepresentative(relay);
+			} catch (Exception e) {				
+				if(agent.usesAuthorization())
+					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rrep.getClass().getName(), rrep.getSource(), fSender));
+				else
+					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));
+			}
+		} else if (agent.getRole() == Role.Link){
+			Role relayRole = agent.getNeighbourRole(relay);
+			if(relayRole != Role.Representative) {
+				if(agent.usesAuthorization())
+					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rrep.getClass().getCanonicalName(), rrep.getSource(),fSender));
+				else
+					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));
+				return -1;
+			}			
+		}
+
+		return relay;
 	}
 
 	private void handleMessage() {
 		if(agent.useAuthorization())
 			if (!authorizeMessage()){
-				agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), 
-						message.getClass().getName(), mSource, fSender));
+				agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), message.getClass().getName(), mSource, fSender));
 				return;
 			}
 		
@@ -101,65 +237,117 @@ public class FrameHandler {
 
 	}
 
-	/**
-	 * Decisions about forwarding or replying to the request are taken.
-	 * 
-	 * @param rreq
-	 *            the route request message
-	 * 
-	 */
-	private void handleMessageRouteRequest(MRouteRequest rreq) {
+	private void handleMessageData(MData data) {
 
-		int destination = rreq.getDestination();
+		int destination = data.getDestination();
 
-		// If I haven't processed this request before...
-		if (!agent.hasProcessed(rreq)) {
-			
-			// For representatives:
-			if (agent.getRole() == Role.Representative) {
-				// If I am the destination, or the representative of the destination
-				if (agent.getId() == destination || agent.hasNeighbour(destination)) {
-
-					MRouteReply rrep = new MRouteReply(agent.getId(), rreq);
-
-					if(agent.mustModify(rreq)){
-						Message modified = modifyMessage(rreq);
-						agent.sendFrame(wrapMessage(modified));
-					} else if (!agent.mustDrop()){
-						sendAndWatchMessage(rrep); // TODO **
-					}
-
-				} else { // If I don't know the destination
-
-					// put my id on the route and forward the request
-					List<Integer> route = rreq.getRoute();
-					route.add(agent.getId());
-					rreq.setRoute(route);
-					
-					if(agent.mustModify(rreq)){
-						Message modified = modifyMessage(rreq);
-						agent.sendFrame(wrapMessage(modified));						
-					} else 	if (!agent.mustDrop())
-						sendAndWatchMessage(rreq); // TODO **  
-				}
-			} else { // For Links:
-				if(agent.mustModify(rreq)){
-					Message modified = modifyMessage(rreq);
-					agent.sendFrame(wrapMessage(modified));
-				} else if (!agent.mustDrop())
-					sendAndWatchMessage(rreq); // TODO **
-			}
-
-			agent.process(rreq);// remember received rreq
-
+		if (agent.getId() == destination) { // I message reached destination, I'm done
+			agent.sendNotification(new ReceivedMeasureEvent(agent.getId(), data.getData()));
+		//	agent.DEBUG("received(2) " + frame);
+			return;
 		} else {
-			// ignore already processed route requests
+			if (agent.getRole() == Role.Representative) {
+
+				if (agent.hasNeighbour(destination)) {
+					// deliver message...				
+					if(agent.mustModify(data)){
+						Message modified = modifyMessage(data);
+						agent.sendFrame(wrapMessage(modified));
+					} else if (!agent.mustDrop())			
+						sendAndWatchMessage(data);
+						//agent.sendFrame(wrapMessage(data)); 
+				} else if (agent.hasRoute(destination)) {				
+
+					// If I have a route...
+					RoutingTableEntry rinfo = agent.getRoutingInfo(destination);
+
+					List<Integer> route = rinfo.getRoute();
+					int repId = rinfo.getRepDest();
+
+					// send the data on that route
+					MRoutedData rdata = new MRoutedData(agent.getId(), repId, data, route);
+					
+					if(agent.mustModify(data)){
+						Message modified = modifyMessage(data);
+						agent.sendFrame(wrapMessage(modified));
+					}else if (!agent.mustDrop()) 				
+						sendAndWatchMessage(rdata);
+					
+				} else { // If I don't have a route
+					int reqId = agent.generateRREQ(data.getDestination());
+					MRouteRequest rreq = new MRouteRequest(agent.getId(), destination,	reqId, new ArrayList<Integer>());
+
+					agent.process(rreq); // remember not to process again
+					
+					agent.rememberData(rreq.getRequestId(), new WaitingDataInfo(data)); // remember what message to send
+					/* route requests are not dropped
+					if(agent.mustModify(data)){
+						Message modified = modifyMessage(data);
+						agent.sendFrame(wrapMessage(modified)); 
+					} else if (!agent.mustDrop()) */ 
+					
+					sendAndWatchMessage(rreq); 					
+				}
+			} else {
+				// there must be a mistake, if I am not the destination nor a representative
+			}
 		}
 	}
+	
+	
+	// AUXILIARY METHODS
+	
+	private void handleMessageRoutedData(MRoutedData rdata) {
 
+		// this is the id of the representative of the destination
+		int repDest = rdata.getDestination();
+		
+		MData data = rdata.getData();
+		agent.DEBUG("RECEIVED ROUTED DATA " + frame);
+		
+		// this is the id of the actual destination
+		int dataDest = data.getDestination(); 
+
+		if (agent.getRole() == Role.Simple) {
+			// there must be a mistake
+			return;
+		}
+
+		if (agent.getId() == repDest) { // The routed data has reached its destination (representative)
+
+			if (agent.getRole() == Role.Representative) {
+				if (agent.getId() == dataDest) { // data has reached its final destination
+										// (which is also its representative)
+					agent.sendNotification(new ReceivedMeasureEvent(agent.getId(), data.getData()));
+				//	agent.DEBUG("received(1) " + frame);
+					return;
+				} else {
+					if (agent.hasNeighbour(dataDest)) {
+						if(agent.mustModify(rdata)){
+							Message modified = modifyMessage(rdata);
+							agent.sendFrame(wrapMessage(modified));
+						} else if (!agent.mustDrop())
+							agent.sendFrame(wrapMessage(data)); // deliver the data to its actual destination
+					} else {
+						// there must be a mistake
+					}
+				}
+			} else { // ... destination is not a representative
+				// there must be a mistake: the destination of routed data may only be a Representative
+			}
+		} else { // The routed data has not reached its destination yet
+			if (agent.mustModify(rdata)) {
+				Message modified = modifyMessage(rdata);
+				agent.sendFrame(wrapMessage(modified));
+			} else if (!agent.mustDrop())
+				sendAndWatchMessage(rdata); 
+		}
+	}
+	
 	private void handleMessageRouteReply(MRouteReply rrep) {
 
 		int destination = rrep.getDestination();
+		agent.DEBUG("RECEIVING ROUTE REPLY .... " + frame);
 
 		if (agent.getId() == destination) { // I am the one who initiated the request
 
@@ -187,6 +375,7 @@ public class FrameHandler {
 
 				// If the message was not sent already...
 				if (!waitingDataInfo.isWasSent()) {
+					
 					// Send the routed data, back to the source of the reply (representative of the destination)
 					MRoutedData rdata = new MRoutedData(agent.getId(), rrep.getSource(), mdata, route);
 
@@ -194,7 +383,8 @@ public class FrameHandler {
 						Message modified = modifyMessage(rrep);
 						agent.sendFrame(wrapMessage(modified));
 					} else if (!agent.mustDrop()) 
-						sendAndWatchMessage(rdata); // TODO **
+						sendAndWatchMessage(rdata); 
+					waitingDataInfo.setWasSent(true);
 				}
 
 			} else {
@@ -205,190 +395,120 @@ public class FrameHandler {
 				Message modified = modifyMessage(rrep);
 				agent.sendFrame(wrapMessage(modified));
 			} else if (!agent.mustDrop()) 
-				sendAndWatchMessage(rrep); // TODO **
+				sendAndWatchMessage(rrep); 
 		}
 	}
 
-	private void handleMessageRoutedData(MRoutedData rdata) {
-
-		// this is the id of the representative of the destination
-		int repDest = rdata.getDestination();
-		
-		MData data = rdata.getData();
-		
-		// this is the id of the actual destination
-		int dataDest = data.getDestination(); 
-
-		if (agent.getRole() == Role.Simple) {
-			// there must be a mistake
-			return;
-		}
-
-		if (agent.getId() == repDest) { // The routed data has reached its destination (representative)
-
-			if (agent.getRole() == Role.Representative) {
-				if (agent.getId() == dataDest) { // data has reached its final destination
-										// (which is also its representative)
-					agent.sendNotification(new ReceivedMeasureEvent(agent.getId(), data.getData()));
-					return;
-				} else {
-					if (agent.hasNeighbour(dataDest)) {
-						if(agent.mustModify(rdata)){
-							Message modified = modifyMessage(rdata);
-							agent.sendFrame(wrapMessage(modified));
-						} else if (!agent.mustDrop())
-							agent.sendFrame(wrapMessage(data)); // deliver the data to its actual destination
-					} else {
-						// there must be a mistake
-					}
-				}
-			} else { // ... destination is not a representative
-				// there must be a mistake: the destination of routed data may only be a Representative
-			}
-		} else { // The routed data has not reached its destination yet
-			if (agent.mustModify(rdata)) {
-				Message modified = modifyMessage(rdata);
-				agent.sendFrame(wrapMessage(modified));
-			} else if (!agent.mustDrop())
-				sendAndWatchMessage(rdata); // TODO **
-		}
-	}
-
-	private void handleMessageData(MData data) {
-
-		int destination = data.getDestination();
-
-		if (agent.getId() == destination) { // I message reached destination, I'm done
-			agent.sendNotification(new ReceivedMeasureEvent(agent.getId(), data.getData()));
-			return;
-		} else {
-			if (agent.getRole() == Role.Representative) {
-
-				if (agent.hasNeighbour(destination)) {
-					// deliver message...				
-					if(agent.mustModify(data)){
-						Message modified = modifyMessage(data);
-						agent.sendFrame(wrapMessage(modified));
-					} else if (!agent.mustDrop())						
-						agent.sendFrame(wrapMessage(data)); // TODO: follow data
-				} else if (agent.hasRoute(destination)) {
-
-					// If I have a route...
-					RoutingTableEntry rinfo = agent.getRoutingInfo(destination);
-
-					List<Integer> route = rinfo.getRoute();
-					int repId = rinfo.getRepDest();
-
-					// send the data on that route
-					MRoutedData rdata = new MRoutedData(agent.getId(), repId, data, route);
-					
-					if(agent.mustModify(data)){
-						Message modified = modifyMessage(data);
-						agent.sendFrame(wrapMessage(modified));
-					}else if (!agent.mustDrop()) {
-						sendAndWatchMessage(rdata); // TODO **
-					}
-				} else { // If I don't have a route
-					int reqId = agent.generateRREQ(data.getDestination());
-					MRouteRequest rreq = new MRouteRequest(agent.getId(), destination,	reqId, new ArrayList<Integer>());
-
-					agent.process(rreq); // remember not to process again
-					agent.rememberData(rreq.getRequestId(), new WaitingDataInfo(data)); // remember what message to send
-					if(agent.mustModify(data)){
-						Message modified = modifyMessage(data);
-						agent.sendFrame(wrapMessage(modified)); 
-					} else 	if (!agent.mustDrop())
-						sendAndWatchMessage(rreq);// search for route					
-				}
-			} else {
-				// there must be a mistake, if I am not the destination nor a representative
-			}
-		}
-	}
-	
-	
-	// AUXILIARY METHODS
-	
 	/**
+	 * Decisions about forwarding or replying to the request are taken.
 	 * 
-	 * @param msg
-	 * @param frameSender
-	 * @return true if the message complies with the protocol, false if
+	 * @param rreq
+	 *            the route request message
+	 * 
 	 */
-	private boolean authorizeMessage() {
-		boolean ok = true;
-		Role sourceRole = agent.getNeighbourRole(mSource);
-		Role senderRole = agent.getNeighbourRole(fSender);
-		
-		if (message instanceof MData) {
-			// Simple agents can only be the destination of Data; 
-			// the source of Data is either a neighbour or
-			// the source is unknown and the sender is a Representative neighbour
-			if (agent.getRole() == Role.Simple || agent.getRole() == Role.Link) {
-				ok = (message.getDestination() == agent.getId() && (message.getSource() == fSender || (sourceRole == Role.Unknown && senderRole == Role.Representative)));
-			} else if (agent.getRole() == Role.Representative) { 
-				ok = (message.getSource() == fSender);
+	private void handleMessageRouteRequest(MRouteRequest rreq) {
+
+		int destination = rreq.getDestination();
+
+		// If I haven't processed this request before...
+		if (!agent.hasProcessed(rreq)) {
+			// agent.DEBUG("ROUTE REQUEST .... " + frame);
+			// remember received rreq
+			agent.process(rreq);
+			
+			// For representatives:
+			if (agent.getRole() == Role.Representative) {
+				// If I am the destination, or the representative of the destination
+				if (agent.getId() == destination || agent.hasNeighbour(destination)) {
+
+					MRouteReply rrep = new MRouteReply(agent.getId(), rreq);
+
+					/*if(agent.mustModify(rreq)){
+						Message modified = modifyMessage(rreq);
+						agent.sendFrame(wrapMessage(modified));
+					} else if (!agent.mustDrop())*/
+						sendAndWatchMessage(rrep); 			
+
+				} else { // If I don't know the destination
+
+					// put my id on the route and forward the request
+					List<Integer> route = rreq.getRoute();
+					route.add(agent.getId());
+					rreq.setRoute(route);
+					
+					/*if(agent.mustModify(rreq)){
+						Message modified = modifyMessage(rreq);
+						agent.sendFrame(wrapMessage(modified));						
+					} else 	if (!agent.mustDrop()) */
+						sendAndWatchMessage(rreq);   
+				}
+			} else { // For Links:
+				/* if(agent.mustModify(rreq)){
+					Message modified = modifyMessage(rreq);
+					agent.sendFrame(wrapMessage(modified));
+				} else if (!agent.mustDrop()) */
+					sendAndWatchMessage(rreq); 
 			}
-		} else if (message instanceof MRoutedData) {
-			if(agent.getRole() == Role.Simple)
-				ok = false;
-			else if (agent.getRole() == Role.Link) {
-				ok = !((message.getDestination() == agent.getId())
-						|| (senderRole == Role.Simple) || (senderRole == Role.Link));
-			} else if (agent.getRole() == Role.Representative) {
-				ok = !(senderRole == Role.Simple || (senderRole == Role.Link && sourceRole != Role.Unknown));
-			}
-		} else if (message instanceof MRouteRequest || message instanceof MRouteReply) {
-			if(agent.getRole() == Role.Simple){
-				ok = false;
-			} else if (agent.getRole() == Role.Link){
-				ok = (senderRole == Role.Representative) && (message.getSource() == fSender || sourceRole == Role.Unknown || sourceRole == Role.Representative);
-			} else if (agent.getRole() == Role.Representative){
-				ok = (senderRole == Role.Link) && (sourceRole == Role.Unknown);
-			}
-		} 
-	
-		return ok;
+
+			
+
+		} else {
+			// ignore already processed route requests
+		}
 	}
 	
-	public static Message modifyMessage(Message msg) {
-		if(msg.getClass().equals(MRouteRequest.class)){
-			MRouteRequest rreq = (MRouteRequest) msg;
-			rreq.setDestination(Sensor.generateFakeId());
-			return rreq;
-		} else if (msg.getClass().equals(MRouteReply.class)){
-			MRouteReply rrep = (MRouteReply) msg;
-			rrep.setSource(Sensor.generateFakeId());
-			return rrep;
-		} else if (msg.getClass().equals(MRoutedData.class)){
-			MRoutedData rdata = (MRoutedData) msg;
-			rdata.setDestination(Sensor.generateFakeId());
-			return rdata;
-		} else if (msg.getClass().equals(MData.class)){
-			MData mdata = (MData) msg;
-			mdata.setDestination(Sensor.generateFakeId());
-			return mdata;
-		}
-		return msg;		
+	private boolean intendedReceiver() {
+		return frame.getReceiver() == agent.getId()
+				|| frame.getReceiver() == Frame.BROADCAST
+				|| ((agent.getRole() == Role.Representative) && (frame.getReceiver() == Frame.BROADCAST_REPRESENTATIVE))
+				|| ((agent.getRole() == Role.Link) && (frame.getReceiver() == Frame.BROADCAST_LINK));
 	}
 
 	private void matchMessage() {
-		WatchListEntry we = agent.getWatchedMessageEntry(message, fSender);
 		
+		WatchListEntry we = agent.getWatchedMessageEntry(message, fSender);
+	
 		if (we != null){
 			agent.removeFromWatchList(we);
 		}
 	}
-	/**
-	 * Builds a frame, according to the type of message.
-	 * 
-	 * @param message
-	 * @param frameSender
-	 *            the id of the agent from which the frame containing the
-	 *            message came. Used only by RREP and RData messages, to compute
-	 *            the receiver field of the frame.
-	 * @return the frame to send
-	 */
+
+	public void sendAndWatchMessage(Message message){
+		Frame frameToSend = wrapMessage(message);
+		
+		
+		if(agent.useTrust()){
+			int watchedNode = frameToSend.getReceiver();
+	
+			if(watchedNode > 0 && watchedNode != message.getDestination()){
+				int interactionNumber = agent.addToWatchList(message, watchedNode);			
+				WatchListEntry we = new WatchListEntry(watchedNode, interactionNumber, message);
+				agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));					
+			} /* else if (watchedNode == Frame.BROADCAST_LINK){
+				List<Integer> watchedNodes = agent.getNeighbours(Role.Link);
+				watchedNodes.remove((Integer)fSender); // watch all nodes besides the one who sent the frame (if existent)
+				for(Integer wn : watchedNodes){
+					if (wn != message.getDestination()) {
+						int interactionNumber = agent.addToWatchList(message, wn);
+						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
+						agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
+					}
+				}
+			} else if (watchedNode == Frame.BROADCAST_REPRESENTATIVE){
+				List<Integer> watchedNodes = agent.getNeighbours(Role.Representative);
+				watchedNodes.remove((Integer)fSender);
+				for(Integer wn : watchedNodes){
+					if (wn != message.getDestination()) {
+						int interactionNumber = agent.addToWatchList(message, wn);
+						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
+						agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
+					}
+				}
+			} */
+		}
+		agent.sendFrame(frameToSend); // just forward the request
+	}
+	
 	private Frame wrapMessage(Message msg) {
 		Frame frame = new Frame(agent.getId(), Frame.BROADCAST, msg);
 
@@ -440,130 +560,5 @@ public class FrameHandler {
 			}
 		}
 		return frame;
-	}
-
-	private int getRelayRREP(MRouteReply rrep) {
-		List<Integer> route = rrep.getRoute();
-		int relay;
-
-		if (route.isEmpty())
-			relay = rrep.getDestination();
-		else {
-			int index;
-			if (agent.getRole() == Role.Representative)
-				index = route.indexOf(agent.getId());
-			else
-				index = route.indexOf(fSender);
-			
-			
-
-			if (index == -1) {
-				relay = route.get(route.size() - 1);
-			} else if (index > 0)
-				relay = route.get(index - 1);
-			else
-				relay = rrep.getDestination();
-		}
-
-		if (agent.getRole() == Role.Representative){ 
-			try {
-				relay = agent.getLinkToRepresentative(relay);
-			} catch (Exception e) {				
-				if(agent.usesAuthorization())
-					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rrep.getClass().getName(), rrep.getSource(), fSender));
-				else
-					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));
-			}
-		} else if (agent.getRole() == Role.Link){
-			Role relayRole = agent.getNeighbourRole(relay);
-			if(relayRole != Role.Representative) {
-				if(agent.usesAuthorization())
-					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rrep.getClass().getCanonicalName(), rrep.getSource(),fSender));
-				else
-					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));
-				return -1;
-			}			
-		}
-
-		return relay;
-	}
-
-	private int getRelayRData(MRoutedData rdata) {
-		List<Integer> route = rdata.getRoute();
-		int relay;
-
-		if (route.isEmpty()) {
-			relay = rdata.getDestination();
-		} else {
-			int index;
-
-			if (agent.getRole() == Role.Representative)
-				index = route.indexOf(agent.getId());
-			else
-				index = route.indexOf(fSender);
-			if (index == -1)
-				relay = route.get(0);
-			else if (index < route.size() - 1)
-				relay = route.get(index + 1);
-			else
-				relay = rdata.getDestination();
-		}
-
-		if (agent.getRole() == Role.Representative){ 
-			try {
-				relay = agent.getLinkToRepresentative(relay);
-			} catch (Exception e) {
-				if(agent.usesAuthorization())
-					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rdata.getClass().getName(), rdata.getSource(), fSender));
-				else 
-					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));
-			}
-		} else if (agent.getRole() == Role.Link) {
-			Role relayRole = agent.getNeighbourRole(relay);
-			if(relayRole != Role.Representative) {
-				if(agent.usesAuthorization())
-					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rdata.getClass().getName(), rdata.getSource(),fSender));
-				else 
-					agent.sendNotification(new CorruptedRouteEvent(agent.getId(), route, fSender));				
-				return -1;
-			}			
-		}
-		return relay;
-	}
-	
-	public void sendAndWatchMessage(Message message){
-		Frame frameToSend = wrapMessage(message);
-		
-		
-		if(agent.useTrust()){
-			int watchedNode = frameToSend.getReceiver();
-	
-			if(watchedNode > 0 && watchedNode != message.getDestination()){
-				int interactionNumber = agent.addToWatchList(message, watchedNode);
-				WatchListEntry we = new WatchListEntry(watchedNode, interactionNumber, message);
-				agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));					
-			} else if (watchedNode == Frame.BROADCAST_LINK){
-				List<Integer> watchedNodes = agent.getNeighbours(Role.Link);
-				watchedNodes.remove((Integer)fSender); // watch all nodes besides the one who sent the frame (if existent)
-				for(Integer wn : watchedNodes){
-					if (wn != message.getDestination()) {
-						int interactionNumber = agent.addToWatchList(message, wn);
-						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
-						agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));
-					}
-				}
-			} else if (watchedNode == Frame.BROADCAST_REPRESENTATIVE){
-				List<Integer> watchedNodes = agent.getNeighbours(Role.Representative);
-				watchedNodes.remove((Integer)fSender);
-				for(Integer wn : watchedNodes){
-					if (wn != message.getDestination()) {
-						int interactionNumber = agent.addToWatchList(message, wn);
-						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
-						agent.addBehaviour(new WatchListRemoverBehaviour(agent, TrustManager.WATCH_TIME, we));
-					}
-				}
-			}
-		}
-		agent.sendFrame(frameToSend); // just forward the request
 	}
 }
