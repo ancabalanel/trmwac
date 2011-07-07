@@ -43,7 +43,7 @@
 	<workstation id="1" />
 
 	<!-- The default behaviour of nodes: sending measures -->	
-	<measures id="*" total="5" interval="100" issued="0"/>
+	<measures id="*" total="5" interval="1000" issued="0"/>
 	
 	<!-- The specification of attacks follows: -->
 	<!-- attack type="nofwd" num="2" role="Link" issued="10" probDrop="0.5"/-->

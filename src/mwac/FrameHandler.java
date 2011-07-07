@@ -13,6 +13,7 @@ import mwac.msgs.MPresentation;
 import mwac.msgs.MRouteReply;
 import mwac.msgs.MRouteRequest;
 import mwac.msgs.MRoutedData;
+import mwac.msgs.MWarning;
 import mwac.msgs.Message;
 import sim.Sensor;
 import sim.behaviours.WatchListRemoverBehaviour;
@@ -80,7 +81,7 @@ public class FrameHandler {
 
 		agent.sendNotification(new ReceivedFrameEvent(agent.getId()));
 
-		if (agent.useTrust()) {
+		if (agent.isUsingTrust()) {
 			matchMessage();
 			
 			if (intendedReceiver())
@@ -97,7 +98,7 @@ public class FrameHandler {
 		
 		if (message instanceof MData) {
 			if (agent.getRole() == Role.Simple || agent.getRole() == Role.Link) {
-				ok = (message.getDestination() == agent.getId() && (message.getSource() == fSender || (sourceRole == Role.Unknown && senderRole == Role.Representative)));
+				ok = (message.getDestination() == agent.getId() && (message.getSource() == fSender || ((sourceRole == Role.Unknown || sourceRole == Role.NNRep) && senderRole == Role.Representative)));
 			} else if (agent.getRole() == Role.Representative) { 
 				ok = (message.getSource() == fSender);
 			}
@@ -108,15 +109,15 @@ public class FrameHandler {
 				ok = !((message.getDestination() == agent.getId())
 						|| (senderRole == Role.Simple) || (senderRole == Role.Link));
 			} else if (agent.getRole() == Role.Representative) {
-				ok = !(senderRole == Role.Simple || (senderRole == Role.Link && sourceRole != Role.Unknown));
+				ok = !(senderRole == Role.Simple || (senderRole == Role.Link && sourceRole != Role.Unknown && sourceRole != Role.NNRep));
 			}
 		} else if (message instanceof MRouteRequest || message instanceof MRouteReply) {
 			if(agent.getRole() == Role.Simple){
 				ok = false;
 			} else if (agent.getRole() == Role.Link){
-				ok = (senderRole == Role.Representative) && (message.getSource() == fSender || sourceRole == Role.Unknown || sourceRole == Role.Representative);
+				ok = (senderRole == Role.Representative) && (message.getSource() == fSender || sourceRole == Role.Unknown || sourceRole == Role.NNRep || sourceRole == Role.Representative);
 			} else if (agent.getRole() == Role.Representative){
-				ok = (senderRole == Role.Link) && (sourceRole == Role.Unknown);
+				ok = (senderRole == Role.Link) && (sourceRole == Role.Unknown || sourceRole == Role.NNRep);
 			}
 		} 
 	
@@ -230,9 +231,15 @@ public class FrameHandler {
 		}
 		if (message instanceof MRoutedData) {
 			handleMessageRoutedData((MRoutedData) message);
+			return;
 		}
 		if (message instanceof MData) {
 			handleMessageData((MData) message);
+			return;
+		}
+		if (message instanceof MWarning){
+			handleMessageWarning((MWarning) message);
+			return;
 		}
 
 	}
@@ -255,7 +262,7 @@ public class FrameHandler {
 						agent.sendFrame(wrapMessage(modified));
 					} else if (!agent.mustDrop())			
 						sendAndWatchMessage(data);
-						//agent.sendFrame(wrapMessage(data)); 
+
 				} else if (agent.hasRoute(destination)) {				
 
 					// If I have a route...
@@ -280,13 +287,13 @@ public class FrameHandler {
 					agent.process(rreq); // remember not to process again
 					
 					agent.rememberData(rreq.getRequestId(), new WaitingDataInfo(data)); // remember what message to send
-					/* route requests are not dropped
-					if(agent.mustModify(data)){
+					
+					
+					/*if(agent.mustModify(data)){
 						Message modified = modifyMessage(data);
 						agent.sendFrame(wrapMessage(modified)); 
-					} else if (!agent.mustDrop()) */ 
-					
-					sendAndWatchMessage(rreq); 					
+					} else if (!agent.mustDrop()) */
+						sendAndWatchMessage(rreq); 					
 				}
 			} else {
 				// there must be a mistake, if I am not the destination nor a representative
@@ -303,7 +310,7 @@ public class FrameHandler {
 		int repDest = rdata.getDestination();
 		
 		MData data = rdata.getData();
-		agent.DEBUG("RECEIVED ROUTED DATA " + frame);
+		// agent.DEBUG("RECEIVED ROUTED DATA " + frame);
 		
 		// this is the id of the actual destination
 		int dataDest = data.getDestination(); 
@@ -347,7 +354,7 @@ public class FrameHandler {
 	private void handleMessageRouteReply(MRouteReply rrep) {
 
 		int destination = rrep.getDestination();
-		agent.DEBUG("RECEIVING ROUTE REPLY .... " + frame);
+		//agent.DEBUG("RECEIVING ROUTE REPLY .... " + frame);
 
 		if (agent.getId() == destination) { // I am the one who initiated the request
 
@@ -371,8 +378,9 @@ public class FrameHandler {
 						agent.addRoute(finalDest, rrep.getSource(), route);
 				} else { // If i had no route, add the new route
 					agent.addRoute(finalDest, rrep.getSource(), route);
+					
 				}
-
+				
 				// If the message was not sent already...
 				if (!waitingDataInfo.isWasSent()) {
 					
@@ -399,20 +407,13 @@ public class FrameHandler {
 		}
 	}
 
-	/**
-	 * Decisions about forwarding or replying to the request are taken.
-	 * 
-	 * @param rreq
-	 *            the route request message
-	 * 
-	 */
 	private void handleMessageRouteRequest(MRouteRequest rreq) {
 
 		int destination = rreq.getDestination();
 
 		// If I haven't processed this request before...
 		if (!agent.hasProcessed(rreq)) {
-			// agent.DEBUG("ROUTE REQUEST .... " + frame);
+
 			// remember received rreq
 			agent.process(rreq);
 			
@@ -423,11 +424,7 @@ public class FrameHandler {
 
 					MRouteReply rrep = new MRouteReply(agent.getId(), rreq);
 
-					/*if(agent.mustModify(rreq)){
-						Message modified = modifyMessage(rreq);
-						agent.sendFrame(wrapMessage(modified));
-					} else if (!agent.mustDrop())*/
-						sendAndWatchMessage(rrep); 			
+					sendAndWatchMessage(rrep); 			
 
 				} else { // If I don't know the destination
 
@@ -436,24 +433,33 @@ public class FrameHandler {
 					route.add(agent.getId());
 					rreq.setRoute(route);
 					
-					/*if(agent.mustModify(rreq)){
-						Message modified = modifyMessage(rreq);
-						agent.sendFrame(wrapMessage(modified));						
-					} else 	if (!agent.mustDrop()) */
-						sendAndWatchMessage(rreq);   
+					sendAndWatchMessage(rreq);   
 				}
 			} else { // For Links:
-				/* if(agent.mustModify(rreq)){
-					Message modified = modifyMessage(rreq);
-					agent.sendFrame(wrapMessage(modified));
-				} else if (!agent.mustDrop()) */
-					sendAndWatchMessage(rreq); 
+				sendAndWatchMessage(rreq); 
 			}
-
-			
-
 		} else {
 			// ignore already processed route requests
+		}
+	}
+	
+	
+	private void handleMessageWarning(MWarning warn){
+		if(agent.isUsingTrust()){
+		
+			//agent.DEBUG("Received warning  " + warn);			
+			int suspect = warn.getSuspect();
+			
+			Role suspectRole = agent.getNeighbourRole(suspect);		
+			
+			if(agent.hasNeighbour(suspect))
+				agent.modifyTrust(suspect, -Parameters.TRUST_PENALTY);
+			
+			if(suspectRole == Role.Representative){				
+				if (agent.getNumTrustedRepresentatives() == 0 && agent.getSendMeasuresBehaviour() != null)
+					agent.removeBehaviour(agent.getSendMeasuresBehaviour());
+			}
+			
 		}
 	}
 	
@@ -473,40 +479,19 @@ public class FrameHandler {
 		}
 	}
 
-	public void sendAndWatchMessage(Message message){
-		Frame frameToSend = wrapMessage(message);
+	private void sendAndWatchMessage(Message message){
+		Frame frameToSend = wrapMessage(message);		
 		
-		
-		if(agent.useTrust()){
+		if (agent.isUsingTrust()) {
 			int watchedNode = frameToSend.getReceiver();
-	
-			if(watchedNode > 0 && watchedNode != message.getDestination()){
-				int interactionNumber = agent.addToWatchList(message, watchedNode);			
+
+			if (watchedNode > 0 && watchedNode != message.getDestination()) {
+				int interactionNumber = agent.addToWatchList(message, watchedNode);
 				WatchListEntry we = new WatchListEntry(watchedNode, interactionNumber, message);
-				agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));					
-			} /* else if (watchedNode == Frame.BROADCAST_LINK){
-				List<Integer> watchedNodes = agent.getNeighbours(Role.Link);
-				watchedNodes.remove((Integer)fSender); // watch all nodes besides the one who sent the frame (if existent)
-				for(Integer wn : watchedNodes){
-					if (wn != message.getDestination()) {
-						int interactionNumber = agent.addToWatchList(message, wn);
-						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
-						agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
-					}
-				}
-			} else if (watchedNode == Frame.BROADCAST_REPRESENTATIVE){
-				List<Integer> watchedNodes = agent.getNeighbours(Role.Representative);
-				watchedNodes.remove((Integer)fSender);
-				for(Integer wn : watchedNodes){
-					if (wn != message.getDestination()) {
-						int interactionNumber = agent.addToWatchList(message, wn);
-						WatchListEntry we = new WatchListEntry(wn, interactionNumber, message);
-						agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
-					}
-				}
-			} */
+				agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
+			} 
 		}
-		agent.sendFrame(frameToSend); // just forward the request
+		agent.sendFrame(frameToSend); // just forward the request			
 	}
 	
 	private Frame wrapMessage(Message msg) {

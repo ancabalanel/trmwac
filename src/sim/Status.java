@@ -17,44 +17,88 @@ public class Status {
 	
 	boolean authorization;
 	
-	boolean useTrust;
-	boolean promiscuousMode;
-
-	boolean fabricator;
+	boolean usingTrust;
+	boolean listeningToRRequests;
 	
-	boolean modifier;
-	String modMsgType;
-	float modProb;
+	boolean fabricating;
 
+	boolean modifying;
+
+	String modMsgType;
+	
+	float modProb;
 	public boolean nofwd;
 	public float dropProb;
 
 	public Status(Sensor agent) {
 		this.agent = agent;
 		
-		promiscuousMode = false;
 		authorization = false;
-		useTrust = false;
+		usingTrust = false;
+		listeningToRRequests = false;
 
-		fabricator = false;
-		modifier = false;
+		fabricating = false;
+		modifying = false;
 		modProb = 0.0f;
 		
 		nofwd = false;
 		dropProb = 0.0f;
 	}
 
-	/**
-	 * Decides whether to drop a message or not.
-	 * 
-	 * @return <code>true</code> if the message should be dropped,
-	 *         <code>false</code> otherwise
-	 */
 	public boolean drop() {
 		if(nofwd)
 			return Parameters.random.nextFloat() < dropProb;
 		else
 			return false;
+	}
+
+	public Sensor getAgent() {
+		return agent;
+	}
+
+	public float getDropProb() {
+		return dropProb;
+	}
+
+	public String getModMsgType() {
+		return modMsgType;
+	}
+
+	public float getModProb() {
+		return modProb;
+	}
+
+	public boolean isAuthorization() {
+		return authorization;
+	}
+
+	public boolean isFabricating() {
+		return fabricating;
+	}
+
+	public boolean isListeningToRRequests() {
+		return listeningToRRequests;
+	}
+
+	/**
+	 *  
+	 * @return <code>true</code> if the agent with this status is malicious,
+	 *         <code>false</code> if it is not malicious.
+	 */
+	public boolean isMalicious() {
+		return fabricating || modifying || nofwd;
+	}
+
+	public boolean isModifying() {
+		return modifying;
+	}
+
+	public boolean isNofwd() {
+		return nofwd;
+	}
+
+	public boolean isUsingTrust() {
+		return usingTrust;
 	}
 
 	/**
@@ -67,7 +111,7 @@ public class Status {
 	 *         <code>false</code> otherwise
 	 */
 	public boolean mustModify(Message msg){
-		if(modifier)
+		if(modifying)
 			if(msg.getClass().getName().equals(modMsgType))
 				return Parameters.random.nextFloat() < modProb;
 			else
@@ -76,93 +120,44 @@ public class Status {
 			return false;
 	}
 
-	/**
-	 *  
-	 * @return <code>true</code> if the agent with this status is malicious,
-	 *         <code>false</code> if it is not malicious.
-	 */
-	public boolean isMalicious() {
-		return fabricator || modifier || nofwd;
-	}
-
-	public Sensor getAgent() {
-		return agent;
-	}
-
 	public void setAgent(Sensor agent) {
 		this.agent = agent;
-	}
-
-	public boolean isAuthorization() {
-		return authorization;
 	}
 
 	public void setAuthorization(boolean authorization) {
 		this.authorization = authorization;
 	}
 
-	public boolean isUseTrust() {
-		return useTrust;
+	public void setDropProb(float dropProb) {
+		this.dropProb = dropProb;
 	}
 
-	public void setUseTrust(boolean useTrust) {
-		this.useTrust = useTrust;
+	public void setFabricating(boolean fabr) {
+		this.fabricating = fabr;
 	}
 
-	public boolean isPromiscuousMode() {
-		return promiscuousMode;
+	public void setListeningToRRequests(boolean listeningToRRequests) {
+		this.listeningToRRequests = listeningToRRequests;
 	}
 
-	public void setPromiscuousMode(boolean promiscuousMode) {
-		this.promiscuousMode = promiscuousMode;
-	}
-
-	public boolean isFabricator() {
-		return fabricator;
-	}
-
-	public void setFabricator(boolean fabricator) {
-		this.fabricator = fabricator;
-	}
-
-	public boolean isModifier() {
-		return modifier;
-	}
-
-	public void setModifier(boolean modifier) {
-		this.modifier = modifier;
-	}
-
-	public String getModMsgType() {
-		return modMsgType;
+	public void setModifying(boolean mod) {
+		this.modifying = mod;
 	}
 
 	public void setModMsgType(String modMsgType) {
 		this.modMsgType = modMsgType;
 	}
 
-	public float getModProb() {
-		return modProb;
-	}
-
 	public void setModProb(float modProb) {
 		this.modProb = modProb;
-	}
-
-	public boolean isNofwd() {
-		return nofwd;
 	}
 
 	public void setNofwd(boolean nofwd) {
 		this.nofwd = nofwd;
 	}
 
-	public float getDropProb() {
-		return dropProb;
-	}
-
-	public void setDropProb(float dropProb) {
-		this.dropProb = dropProb;
+	public void setUsingTrust(boolean useTrust) {
+		this.usingTrust = useTrust;
 	}
 	
 	

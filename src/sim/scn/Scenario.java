@@ -175,6 +175,12 @@ public class Scenario {
 	public List<Integer> getRandomIds(int num, Role role){
 		List<Integer> ids = new ArrayList<Integer>();
 
+		/*
+		 * TESTING STUFF
+		 * ids.add(3);
+		 * return ids;
+		 */
+		
 		ids = organization.getIdsWithRole(role, workstationId, true);
 
 		if (ids.size() < num){
@@ -191,6 +197,7 @@ public class Scenario {
 				organization.setMalicious(r, true);
 			return randNum;
 		}
+		
 	}
 	
 	public int getWorkstationId() {

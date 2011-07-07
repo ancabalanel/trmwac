@@ -98,7 +98,10 @@ public class TrustManager {
 	
 	/** Map<id, crt number of interactions> keeps track of the interaction number with each neighbour */
 	Map<Integer,Integer> interactionCounter;
-		
+	
+	
+	Map<Integer,Integer> badInteractionCounter;
+	
 	/** The monitored nodes and messages */
 	List<WatchListEntry> watchList;
 	
@@ -106,6 +109,7 @@ public class TrustManager {
 	public TrustManager(Sensor agent) {
 		this.agent = agent;
 		interactionCounter = new HashMap<Integer,Integer>();
+		badInteractionCounter = new HashMap<Integer, Integer>();
 		watchList = new ArrayList<WatchListEntry>();
 	}
 	
@@ -113,18 +117,12 @@ public class TrustManager {
 	public void add(WatchListEntry we){
 		watchList.add(we);
 	}
+	
 	public void decreaseTrust(int id, float amount) {
-		if (agent.getNeighbourTrust(id) > Parameters.TRUST_THRESHOLD) {
-			agent.modifyTrust(id, -amount);
-
-			if (agent.getNeighbourTrust(id) < Parameters.TRUST_THRESHOLD){
-				agent.sendNotification(new DistrustNeighbourEvent(agent.getId(), id));
-				
-			}
-		}
+		
 	}
-
-	public WatchListEntry getWatchedMessage(Message msg, int watchedNode){
+	
+	public WatchListEntry getWatchListEntry(Message msg, int watchedNode){
 		for(WatchListEntry we : watchList)
 			if(we.getWatchedNode() == watchedNode && match(we.getMessage(), msg)){
 				return we;
@@ -132,8 +130,19 @@ public class TrustManager {
 		return null;
 	}
 
-	public void increaseTrust(int id, float amount) {
-		agent.modifyTrust(id, -amount);
+	
+
+	public int incrementBadInteractionCount(int id){
+		Integer count = badInteractionCounter.get(id);
+		if (count == null) {
+			badInteractionCounter.put(id, 1);
+			return 1;
+		}
+		else{
+			count = count + 1;
+			badInteractionCounter.put(id, count);
+			return count;
+		}
 	}
 
 	public int incrementInteractionCount(int id){
@@ -148,10 +157,6 @@ public class TrustManager {
 			return count;
 		}
 	}
-
-	public boolean removeFromWatchList(WatchListEntry entry) {
-		return watchList.remove(entry);
-	}
 	
 	public void removeAllThatMatch(Message msg){
 		List<WatchListEntry> toRemove = new ArrayList<WatchListEntry>();
@@ -161,9 +166,34 @@ public class TrustManager {
 		
 		watchList.removeAll(toRemove);
 	}
+
+	public boolean removeFromWatchList(WatchListEntry entry) {
+		return watchList.remove(entry);
+	}
 	
 	public void trustRecovery() {
 		// TODO 
+	}
+	
+	public void updateTrust(int id){
+		int badInteraction = incrementBadInteractionCount(id);
+		float amount = badInteraction * Parameters.TRUST_DECREASE_UNIT;
+		
+		if (agent.getNeighbourTrust(id) > Parameters.TRUST_THRESHOLD) {
+			agent.modifyTrust(id, -amount);
+			
+			if (agent.getNeighbourTrust(id) < Parameters.TRUST_THRESHOLD){
+				
+				if(agent.getNumTrustedRepresentatives() == 0 && agent.getSendMeasuresBehaviour() != null)
+					agent.removeBehaviour(agent.getSendMeasuresBehaviour());
+				
+				agent.sendNotification(new DistrustNeighbourEvent(agent.getId(), id));
+				agent.warnNeighbours(id);				
+			}
+		} else {
+			//agent.DEBUG("Trust for " + id + " already below threshold ");
+		}		
+		
 	}
 
 }

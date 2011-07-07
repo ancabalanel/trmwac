@@ -9,5 +9,5 @@ package mwac;
  * 
  */
 public enum Role {
-	None, Simple, Link, Representative, Unknown
+	None, Simple, Link, Representative, Unknown, NNRep
 }

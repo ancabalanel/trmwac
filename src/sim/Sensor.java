@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import mwac.Groups;
 import mwac.Neighbourhood;
@@ -29,41 +28,18 @@ import mwac.msgs.MData;
 import mwac.msgs.MRouteReply;
 import mwac.msgs.MRouteRequest;
 import mwac.msgs.MRoutedData;
+import mwac.msgs.MWarning;
 import mwac.msgs.Message;
 import sim.behaviours.MainLoop;
 import sim.behaviours.SendPeriodicMeasures;
 import sim.eval.Parameters;
 import sim.events.Event;
-import sim.scn.instr.Instruction;
 
-/**
- * The <code> Sensor </code> extends the <code> Agent </code> class from Jade.
- * The <code> Sensor </code> agent represents an MWAC agent, part of an
- * instrumentation system.
- * <p>
- * The agent can receive <code>Instruction</code>s from the sim agent, and
- * execute a different behaviour, according to what it is supposed to do:
- * <ul>
- * <li>send periodic measures to a workstation</li>
- * <li>send fabricated messages</li>
- * <li>forward modified messages</li>
- * <li>lose messages</li>
- * </ul>
- * <code>Sensors</code> also send notifications of different events to the
- * <code>Simulation</code> agent.
- * </p>
- * 
- * @author Anca
- * @see Instruction
- * @see Role
- * @see Groups
- * @see Neighbourhood
- * @see Event
- */
+
 @SuppressWarnings("serial")
 public class Sensor extends Agent {
 	
-	AID simAgentAID; // simulation agent id
+	private AID simAgentAID; // simulation agent
 	
 	private int id;
 	private Role role;
@@ -82,7 +58,7 @@ public class Sensor extends Agent {
 	private Map<Integer, WaitingDataInfo> waitingData;
 	
 	/** Trust */
-	TrustManager trustManager;
+	private TrustManager trustManager;
 
 	
 	private SendPeriodicMeasures sendMeasuresBehaviour = null;
@@ -95,7 +71,7 @@ public class Sensor extends Agent {
 		int count = trustManager.incrementInteractionCount(watchedNode);
 		WatchListEntry we = new WatchListEntry(watchedNode, count, rrep); 
 		trustManager.add(we);
-		DEBUG("ADDING TO WATCHLIST... " +  we);
+		// DEBUG("ADDING TO WATCHLIST... " +  we);
 		return count;
 	}
 
@@ -104,9 +80,11 @@ public class Sensor extends Agent {
 	}
 
 
-	// AUXILIARY METHODS
-	
 
+	public void updateTrust(int watchedNode){
+		trustManager.updateTrust(watchedNode);
+	} 
+	
 	public void decreaseTrust(int watchedNode, float amount) {
 		trustManager.decreaseTrust(watchedNode, amount);
 	}
@@ -187,6 +165,10 @@ public class Sensor extends Agent {
 		return neighbourhood.getNeighbourTrust(id);
 	}
 
+	public int getNumTrustedRepresentatives(){
+		return neighbourhood.getNumTrustedRepresentatives();
+	}
+	
 	public int getRepresentative(){
 		return neighbourhood.getRepresentative();
 	}
@@ -204,7 +186,7 @@ public class Sensor extends Agent {
 	}
 	
 	public WatchListEntry getWatchedMessageEntry(Message message, int watchedNode) {
-		return trustManager.getWatchedMessage(message, watchedNode);
+		return trustManager.getWatchListEntry(message, watchedNode);
 	}
 
 	public boolean hasNeighbour(int dest){
@@ -217,6 +199,19 @@ public class Sensor extends Agent {
 
 	public boolean hasRoute(int dest){
 		return routingManager.haveRoute(dest);
+	}
+	
+	public boolean isListeningToRRequests(){
+		return status.isListeningToRRequests();
+	}
+	
+	public boolean isUsingTrust(){
+		return status.usingTrust;
+	}
+	
+	// TODO
+	public boolean isOnAnyOfMyRoutes(int id){
+		return routingManager.isOnAnyOfMyRoutes(id);
 	}
 	
 	public void modifyTrust(int id, float amount){
@@ -234,7 +229,7 @@ public class Sensor extends Agent {
 	public void process(MRouteRequest rreq){
 		routingManager.process(rreq);
 	}
-	
+
 	public void rememberData(int reqId, WaitingDataInfo waitingDataInfo) {
 		waitingData.put(reqId, waitingDataInfo);		
 	}
@@ -250,7 +245,6 @@ public class Sensor extends Agent {
 	public WaitingDataInfo retrieveData(int reqId){
 		return waitingData.get(reqId);
 	}
-
 	public void sendFrame(Frame frame){
 		ACLMessage aclMessage = new ACLMessage(ACLMessage.PROPAGATE);
 		aclMessage.addReceiver(simAgentAID);
@@ -276,35 +270,39 @@ public class Sensor extends Agent {
 			e.printStackTrace();
 		}
 	}
+
 	public void setAuthorization(boolean b){
 		status.setAuthorization(b);
 	}
-	
 	public void setDropProb(float dropProbability) {
 		status.setDropProb(dropProbability);
 	}
-
+	
+	public void setListeningToRRequests(boolean b){
+		status.setListeningToRRequests(b);
+	}
+	
 	public void setMeasuresToSend(List<String> measuresToSend) {
 		this.measuresToSend = measuresToSend;
 	}
-	public void setModifier(boolean b) {
-		status.setModifier(b);		
-	}
 	
+	public void setModifier(boolean b) {
+		status.setModifying(b);		
+	}
 	public void setModMsgType(String msgType) {
 		status.setModMsgType(msgType);	
-	}
+	}	
 	
 	public void setModProb(float modProb) {
 		status.setModProb(modProb);
 	}
-	
 	public void setNofwd(boolean b) {
 		status.setNofwd(b);
 	}
+	
 	public void setSendMeasuresBehaviour(SendPeriodicMeasures sendMeasuresBehaviour) {
 		this.sendMeasuresBehaviour = sendMeasuresBehaviour;
-	}	
+	}
 	
 	@Override
 	protected void setup() {
@@ -324,17 +322,18 @@ public class Sensor extends Agent {
 
 		status = new Status(this);
 		status.authorization = Parameters.USE_AUTHORIZATION;
-		status.useTrust = Parameters.USE_TRUST;
+		status.usingTrust = Parameters.USE_TRUST;
+		status.listeningToRRequests = Parameters.LISTEN_TO_RREQ;
 		
 		addBehaviour(new MainLoop(this));
 		
 	}
+	
 	public void setUseAuthorization(boolean b) {
 		status.setAuthorization(b);
 	}
-	
-	public void setUseTrust(boolean b){
-		status.setUseTrust(b);
+	public void setUsingTrust(boolean b){
+		status.setUsingTrust(b);
 	}
 	@Override
 	protected void takeDown() {
@@ -343,10 +342,19 @@ public class Sensor extends Agent {
 	public boolean useAuthorization(){
 		return status.authorization;
 	}
+	
 	public boolean usesAuthorization(){
 		return status.authorization;
 	}
-	public boolean useTrust(){
-		return status.useTrust;
+	
+	public void warnNeighbours(int suspect){
+		MWarning warning = new MWarning(getId(), Frame.BROADCAST, suspect);
+		Frame frame = new Frame(this.id, Frame.BROADCAST, warning);
+		
+		sendFrame(frame);		
+	}
+
+	public void printRoutingTable() {
+		DEBUG(routingManager.getRoutingTable().toString());
 	}
 }

@@ -5,8 +5,9 @@ package mwac;
  */
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import sim.eval.Parameters;
 
 /**
  * @author Anca
@@ -15,29 +16,24 @@ import java.util.List;
 public class Neighbourhood {
 
 	int owner;
-	List<Neighbour> neighbours = new ArrayList<Neighbour>();
-
-	public Neighbourhood(int owner) {
-		this.owner = owner;
-	}
+	List<Neighbour> neighbours;
 
 	public Neighbourhood(int owner, List<Neighbour> nb) {
-		this(owner);
+		this.owner = owner;
 		this.neighbours = nb;
 	}
+	
+	public Neighbourhood(int owner) {
+		this(owner, new ArrayList<Neighbour>());
+	}
 
-	/**
-	 * @param neighbour
-	 * @return true if something changed false if no new neighbour has been
-	 *         added, or old neighbour modified
-	 */
 	public boolean add(Neighbour neighbour) {
 
 		if (!neighbours.contains(neighbour)) {
 			neighbours.add(neighbour);
 			return false;
 		} else {
-			int index = indexOfID(neighbour.id);
+			int index = indexOf(neighbour.id);
 			if (index >= 0) {
 				neighbours.remove(index);
 				neighbours.add(index, neighbour);
@@ -55,14 +51,17 @@ public class Neighbourhood {
 	}
 	
 	public int getLinkToRep(int repId) {
-		List<Integer> allLinksToRep = new ArrayList<Integer>();
+		List<Neighbour> allLinksToRep = new ArrayList<Neighbour>();
 		for (Neighbour n : neighbours) {
 			if (n.getGroups().contains(repId))
-				allLinksToRep.add(n.id);
+				allLinksToRep.add(n);
 		}
+		Neighbour selected = Parameters.chooseTrustedNeighbour(allLinksToRep);
+		if (selected!=null)
+			return selected.id;
+		else
+			return -1;
 		
-		Collections.shuffle(allLinksToRep);
-		return allLinksToRep.get(0);
 	}
 	
 	public List<Neighbour> getNeighbours() {
@@ -78,6 +77,15 @@ public class Neighbourhood {
 		return neighboursWithRole;
 	}
 
+	public float getNeighbourTrust(int id) {
+		for(Neighbour n : neighbours){
+			if (n.id == id) {
+				return n.getTrust();
+			}
+		}
+		return -1.0f; // neighbour does not exist
+	}
+
 	public int getNumRepresentatives() {
 		int numR = 0;
 		for (Neighbour n : neighbours)
@@ -85,34 +93,43 @@ public class Neighbourhood {
 				numR++;
 		return numR;
 	}
+	
+	public int getNumTrustedRepresentatives(){
+		int numR = 0;
+		for (Neighbour n : neighbours)
+			if (n.role == Role.Representative && n.trust > Parameters.TRUST_THRESHOLD)
+				numR++;
+		return numR;
+	}
 
 	public int getOwner() {
 		return owner;
 	}
-
-	/**
-	 * Used by Simple and Link agents to retrieve a representative agent in
-	 * their group
-	 * 
-	 * @return the representative agent, for a simple agent, or a random
-	 *         representative in the case of Links
-	 */
+	
 	public int getRepresentative() {
-		List<Integer> reps = new ArrayList<Integer>();
+		List<Neighbour> reps = new ArrayList<Neighbour>();
 		for (Neighbour n : neighbours) {
-			if (n.role == Role.Representative)
-				reps.add(n.id);
+			if (n.role == Role.Representative && n.trust > Parameters.TRUST_THRESHOLD) 
+				reps.add(n);
 		}
 
-		Collections.shuffle(reps);
-		return reps.get(0);
-		//return reps.get(reps.size()-1);	
+		Neighbour selected = Parameters.chooseTrustedNeighbour(reps);
+		if (selected!=null)
+			return selected.id;
+		else
+			return -1;
 	}
-	
+
 	public Role getRole(int id) {
 		for (Neighbour n : neighbours)
 			if (n.id == id)
 				return n.getRole();
+
+		for(Neighbour n : neighbours){
+			Groups g = n.groups;
+			if(g.contains(id))
+				return Role.NNRep;
+		}
 		return Role.Unknown;
 	}
 
@@ -120,7 +137,7 @@ public class Neighbourhood {
 		return neighbours.size();
 	}
 
-	private int indexOfID(int id) {
+	private int indexOf(int id) {
 		for (int i = 0; i < neighbours.size(); i++)
 			if (neighbours.get(i).id == id)
 				return i;
@@ -148,17 +165,11 @@ public class Neighbourhood {
 		this.owner = owner;
 	}
 
+//	public static int favorTrusted(List<Neighbour> neighbours){
+//	}
+	
 	@Override
 	public String toString() {
 		return "Neighbours of " + owner + ": " + neighbours;
-	}
-
-	public float getNeighbourTrust(int id) {
-		for(Neighbour n : neighbours){
-			if (n.id == id) {
-				return n.getTrust();
-			}
-		}
-		return -1.0f; // neighbour does not exist
 	}
 }

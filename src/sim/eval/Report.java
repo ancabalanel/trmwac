@@ -169,10 +169,10 @@ public class Report {
 			out.println("</br>");
 			out.println("Distrust map </ br>" + distrustMap);
 			
-			out.println("</br> Measures: </br> ");
-			//List<String> measures = agentReceivedMeasures.get(1);
-			//Collections.sort(measures);
-			//for(String m : measures)
+			// out.println("</br> Measures: </br> ");
+			// List<String> measures = agentReceivedMeasures.get(1);
+			// Collections.sort(measures);
+			// for(String m : measures)
 			//	out.println(m + " </br>");
 			out.println("</html>");
 			out.close();

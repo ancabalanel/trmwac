@@ -10,24 +10,25 @@ package mwac.msgs;
 @SuppressWarnings("serial")
 public class MWarning extends Message {
 
-	int possiblyMalicious;
+	int suspect;
 
-	public MWarning(int source, int destination, int possiblyMalicious) {
+	public MWarning(int source, int destination, int suspectId) {
 		super(source, destination);
-		this.possiblyMalicious = possiblyMalicious;
+		this.suspect = suspectId;
 	}
 
-	public int getPossiblyMalicious() {
-		return possiblyMalicious;
+	public int getSuspect() {
+		return suspect;
 	}
 
-	public void setPossiblyMalicious(int possiblyMalicious) {
-		this.possiblyMalicious = possiblyMalicious;
+	public void setSuspect(int suspect) {
+		this.suspect = suspect;
 	}
 
 	@Override
 	public String toString() {
-		return "MWarning [possiblyMalicious=" + possiblyMalicious + ", source="
-				+ source + ", destination=" + destination + "]";
+		return "MWarning [suspect=" + suspect + ", source=" + source
+				+ ", destination=" + destination + "]";
 	}
+
 }

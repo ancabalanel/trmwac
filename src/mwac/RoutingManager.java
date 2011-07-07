@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import mwac.msgs.MRouteReply;
 import mwac.msgs.MRouteRequest;
@@ -76,6 +78,20 @@ public class RoutingManager {
 		return routingTable.containsKey(dest);
 	}
 	
+	// TODO - modify
+	public boolean isOnAnyOfMyRoutes(int suspectId){
+		
+		Set<Entry<Integer,RoutingTableEntry>> entries = routingTable.entrySet();
+		
+		for(Entry<Integer,RoutingTableEntry> e : entries){
+			List<Integer> route = e.getValue().getRoute();
+			System.out.println(route);
+			if(route.contains(suspectId))
+				return true;
+		}
+		return false;
+	}
+	
 	public void process(MRouteRequest rreq){
 		processedRREQ.add(new ProcessedRREQ(rreq.getSource(), rreq.getRequestId()));
 	}
@@ -83,6 +99,7 @@ public class RoutingManager {
 	public boolean wasProcessed(MRouteRequest rreq){
 		return processedRREQ.contains(new ProcessedRREQ(rreq.getSource(), rreq.getRequestId()));
 	}
+
 
 	
 }

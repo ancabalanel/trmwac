@@ -41,8 +41,7 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 			String next = agent.getMeasuresToSend().remove(0);
 			MData mdata = new MData(agent.getId(), destination, next);
 
-			// If i know the destination, send directly.
-			// The role doesn't matter
+			// If i know the destination, send directly (the role doesn't matter)
 			if (agent.hasNeighbour(destination)) {
 				agent.sendFrame(new Frame(agent.getId(), mdata.getDestination(), mdata));
 				agent.sendNotification(new SentMeasureEvent(agent.getId(), mdata.getData()));
@@ -63,21 +62,17 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 							nextHop = rdata.getDestination();
 						else
 							nextHop = route.get(0);
-						try {
+
 						int fReceiver = agent.getLinkToRepresentative(nextHop);
 						
 						agent.sendFrame(new Frame(agent.getId(), fReceiver, rdata));
 						
-						if(agent.useTrust()){
+						if(agent.isUsingTrust()){
 							int interactionNumber = agent.addToWatchList(rdata, fReceiver);
-							WatchListEntry we = new WatchListEntry(fReceiver, interactionNumber, rdata);
-							
+							WatchListEntry we = new WatchListEntry(fReceiver, interactionNumber, rdata);							
 							agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));			
 						}
 						agent.sendNotification(new SentMeasureEvent(agent.getId(), mdata.getData()));
-						} catch (Exception e) {
-							agent.DEBUG(" NEXT HOP IS " + nextHop);
-						}						
 
 					} else { // if i don't have a route ...
 
@@ -86,19 +81,9 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 
 						// remember data to send, for when i receive the route reply
 						agent.rememberData(reqId, new WaitingDataInfo(mdata));					 
-																
-						agent.process(rreq); // remember request id
-						
-						/*if(agent.useTrust()){
-							List<Integer> watchedNodes = agent.getNeighbours(Role.Link);
-							// watch all nodes besides the one who sent the frame (if it is in the list)
-							watchedNodes.remove((Integer) mdata.getSource()); 
-							for(Integer wn : watchedNodes){
-								int interactionNumber = agent.addToWatchList(rreq, wn);
-								WatchListEntry we = new WatchListEntry(wn, interactionNumber, rreq);
-								agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
-							}
-						}*/
+											
+						// remember request id
+						agent.process(rreq);						
 						
 						agent.sendFrame(new Frame(agent.getId(), Frame.BROADCAST_LINK, rreq));
 						agent.sendNotification(new SentMeasureEvent(agent.getId(), mdata.getData())); // notify sim agent
@@ -107,10 +92,9 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 
 					int representative = agent.getRepresentative();
 
-					if(agent.useTrust()){
+					if(agent.isUsingTrust()){
 						int interactionNumber = agent.addToWatchList(mdata, representative);
-						WatchListEntry we = new WatchListEntry(representative, interactionNumber, mdata);
-						
+						WatchListEntry we = new WatchListEntry(representative, interactionNumber, mdata);						
 						agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));			
 					}
 					
@@ -122,7 +106,7 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 
 		} else {
 			// I have no more measures to send
-			stop();
+			agent.removeBehaviour(this);
 		}
 	}
 }
