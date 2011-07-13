@@ -25,6 +25,10 @@ public class MData extends Message{
 		this.data = data;
 	}
 
+	public int getVolume(){
+		return super.getVolume() + data.length();
+	}
+	
 	@Override
 	public String toString() {
 		return "MData [data=" + data + ", source=" + source + ", destination="

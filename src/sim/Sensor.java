@@ -34,6 +34,7 @@ import sim.behaviours.MainLoop;
 import sim.behaviours.SendPeriodicMeasures;
 import sim.eval.Parameters;
 import sim.events.Event;
+import sim.events.SentFrameEvent;
 
 
 @SuppressWarnings("serial")
@@ -252,6 +253,7 @@ public class Sensor extends Agent {
 			try {
 				aclMessage.setContentObject(frame);
 				send(aclMessage);
+				sendNotification(new SentFrameEvent(id, frame.getVolume()));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

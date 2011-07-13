@@ -48,6 +48,9 @@ public class MRouteReply extends Message {
 		return requestId;
 	}
 
+	public int getVolume() {
+		return super.getVolume() + 4 + 4 * route.size();
+	}
 	public void setRequestId(int requestId) {
 		this.requestId = requestId;
 	}

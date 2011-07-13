@@ -35,6 +35,10 @@ public class MRoutedData extends Message{
 	public MData getData() {
 		return data;
 	}
+	
+	public int getVolume(){
+		return super.getVolume() + data.getVolume() + 4 * route.size();
+	}
 
 	public void setData(MData data) {
 		this.data = data;

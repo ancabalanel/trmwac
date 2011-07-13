@@ -79,15 +79,15 @@ public class FrameHandler {
 		mSource = message.getSource();
 		mDestination = message.getDestination();
 
-		agent.sendNotification(new ReceivedFrameEvent(agent.getId()));
-
 		if (agent.isUsingTrust()) {
-			matchMessage();
-			
+			agent.sendNotification(new ReceivedFrameEvent(agent.getId(), frame.getVolume()));
+			matchMessage();			
 			if (intendedReceiver())
 				handleMessage();
-		} else if (intendedReceiver())
+		} else if (intendedReceiver()) {
+			agent.sendNotification(new ReceivedFrameEvent(agent.getId(), frame.getVolume()));
 			handleMessage();
+		}
 
 	}
 
@@ -482,16 +482,19 @@ public class FrameHandler {
 	private void sendAndWatchMessage(Message message){
 		Frame frameToSend = wrapMessage(message);		
 		
-		if (agent.isUsingTrust()) {
-			int watchedNode = frameToSend.getReceiver();
-
-			if (watchedNode > 0 && watchedNode != message.getDestination()) {
-				int interactionNumber = agent.addToWatchList(message, watchedNode);
-				WatchListEntry we = new WatchListEntry(watchedNode, interactionNumber, message);
-				agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
-			} 
-		}
-		agent.sendFrame(frameToSend); // just forward the request			
+		if(frameToSend!= null){
+			if (agent.isUsingTrust()) {
+				
+				int watchedNode = frameToSend.getReceiver();
+	
+				if (watchedNode > 0 && watchedNode != message.getDestination()) {
+					int interactionNumber = agent.addToWatchList(message, watchedNode);
+					WatchListEntry we = new WatchListEntry(watchedNode, interactionNumber, message);
+					agent.addBehaviour(new WatchListRemoverBehaviour(agent, Parameters.WATCH_TIME, we));
+				} 
+			}
+			agent.sendFrame(frameToSend); // just forward the request
+		}			
 	}
 	
 	private Frame wrapMessage(Message msg) {
@@ -516,10 +519,12 @@ public class FrameHandler {
 			MRouteReply rrep = (MRouteReply) msg;
 			
 			relay = getRelayRREP(rrep);
+			
 			if(relay > 0)
 				frame = new Frame(agent.getId(), relay, rrep);
-			else frame = null;
-
+			else { 
+				frame = null;
+			}
 			// ROUTED DATA
 		} else if (msg instanceof MRoutedData) {
 			int relay;

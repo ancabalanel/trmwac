@@ -15,27 +15,24 @@ import mwac.Neighbour;
  *
  */
 public class Parameters {
-	/** used by malicious agents to generate fake ids and routes */
-	private static int UNKNOWN_ID = 1000;
+
 	
 	
 	/** After this delay from the last received message the simulation ends */
-	public static final long DELAY_END = 5000;
+	public static final long DELAY_BEFORE_SIMULATION_END = 11000;
 	
 	/** Maximum simulation time */
-	public static final long MAXIMUM_TIME = 300000;
+	public static final long MAX_SIMULATION_TIME = 300000;
+	
+	
 	
 	/** All honest agents use/don't use authorization */
 	public static boolean USE_AUTHORIZATION = false;
 	
-	/** All hones agents use/don't use trust based decisions */
+	
+	/** All honest agents use/don't use trust based decisions */
 	public static boolean USE_TRUST = true;
-	
-	/** Monitor the forwarding of Route Requests */
-	public static boolean LISTEN_TO_RREQ = false;
-	
-	// For trust management 
-	
+		
 	/** Trust threshold */
 	public final static float TRUST_THRESHOLD = 0.9f;
 
@@ -43,11 +40,23 @@ public class Parameters {
 	public static final float LAMBDA = 0.1f;
 	
 	/** Default time (ms) to listen to a message */
-	public static final long WATCH_TIME = 5000;
+	public static final long WATCH_TIME = 10000;
 
-	/** decrease step */
+	/** Trust decrease step */
 	public static final float TRUST_DECREASE_UNIT = 0.11f;
+	
+	/** Penalty given to a neighbour upon receiving a warning about it */	
 	public static final float TRUST_PENALTY = 0.051f;
+	
+	
+	// other
+	/** Monitor the forwarding of Route Requests */
+	public static boolean LISTEN_TO_RREQ = false;
+	
+	/** used by malicious agents to generate fake ids and routes */
+	private static int UNKNOWN_ID = 1000;
+	
+	public static int SIM_NUMBER = 2;
 	
 	public static Random random = new Random();
 
@@ -59,7 +68,7 @@ public class Parameters {
 		List<Integer> fRoute = new ArrayList<Integer>();
 		int length = random.nextInt(10);
 		for (int i = 0; i < length; i++){
-			fRoute.add(random.nextInt(UNKNOWN_ID));
+			fRoute.add(generateFakeId());
 		}
 		return fRoute;
 	}

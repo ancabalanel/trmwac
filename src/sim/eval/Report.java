@@ -7,8 +7,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -27,24 +29,33 @@ public class Report {
 	
 	Map<Integer, Map<Integer, Float>> neighbourTrust;
 	
-	
+	List<Integer> maliciousAgents;
+		
 	int totalFramesSent;
 	int totalFramesReceived;
 	
-	List<Integer> malicious;
+	
+	int totalFramesSentVolume; // bytes
+	int totalFramesReceivedVolume; // bytes
 	
 	int numCorruptedRouteEvents;
 	int unauthorizedMessages;
 	
-	private PrintWriter out;
+	private String imageFilename;
+	private String outputFilename;
+	private String crtFolder;
 	
-	public Report (String htmlFile){
+	private PrintWriter out;
+	int simCount;
+
+	public Report (String baseFilename, int simCount){
 		
+		this.simCount = simCount;
 		agentSentMeasures = new HashMap<Integer, List<String>>();
 		agentReceivedMeasures = new HashMap<Integer, List<String>>();
 		distrustMap = new HashMap<Integer, List<Integer>>();
 		neighbourTrust = new HashMap<Integer, Map<Integer,Float>>();
-		malicious = new ArrayList<Integer>();
+		maliciousAgents = new ArrayList<Integer>();
 		
 		totalFramesReceived = 0;
 		totalFramesSent = 0;
@@ -52,18 +63,22 @@ public class Report {
 		numCorruptedRouteEvents = 0;
 		unauthorizedMessages = 0;
 		
+		imageFilename = "images" + File.separator + baseFilename + ".png";
+		outputFilename = "output" + File.separator + baseFilename + "-" + simCount + ".html";
+		crtFolder = System.getProperty("user.dir");
+		
 		try {
-			out = new PrintWriter(new File(htmlFile));		
+			out = new PrintWriter(new File(outputFilename));		
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 		
 	}
 	
-	public double computeLostPercentage(){
+	public double computeDeliveredPercentage(){
 		if (getTotalMeasuresSent() == 0)
 			return 0.0;
-		return (100.0 - ((double) getTotalMeasuresReceived() / (double) getTotalMeasuresSent()) * 100.0);
+		return ((double) getTotalMeasuresReceived() / (double) getTotalMeasuresSent()) * 100.0;
 	}
 	
 	public void addSentMeasure(int aid, String measure) {
@@ -89,6 +104,7 @@ public class Report {
 		agentReceivedMeasures.put(aid, measures);		
 	}
 	
+		
 	public void addFramesReceived(int nFrames){
 		totalFramesReceived += nFrames;
 	}
@@ -97,8 +113,16 @@ public class Report {
 		totalFramesSent += nFrames;
 	}
 	
+	public void addFramesSentVolume(int volFrame){
+		totalFramesSentVolume += volFrame;
+	}
+	
+	public void addFramesReceivedVolume(int volFrame){
+		totalFramesReceivedVolume += volFrame;
+	}
+	
 	public void addMaliciousAgent(int source){
-		malicious.add(source);
+		maliciousAgents.add(source);
 	}
 	
 	public void addCorruptedRoute(int source, List<Integer> route, int sender){
@@ -132,50 +156,90 @@ public class Report {
 	
 	public void close(){
 		if (out != null) {
-			// write results
+			
 			out.println("<html>");
 	
-			int mSize = malicious.size();
+			String imageFilepath = crtFolder + File.separator + imageFilename;
+			
+			out.println("<h1>Results for simulation #" + simCount + "</h1>");
+			
+			out.println("<h2>Topology</h2>");			
+			out.println("<img src=\"" + imageFilepath + "\" alt=\"35agents\"/>");
+			
+			out.println("</br></br>");
+			
+			out.println("<h2>Parameters</h2> ");
+			
+			out.println("Using authorization: " + Parameters.USE_AUTHORIZATION + " </br>");
+			out.println("Using trust: " + Parameters.USE_TRUST + " </br>");
+			
+			if(Parameters.USE_TRUST){
+				out.println("Watch time = " + Parameters.WATCH_TIME + " ms + </br>");
+				out.println("Trust threshold = " + Parameters.TRUST_THRESHOLD + "</br>");
+				out.println("Trust decrease unit = " + Parameters.TRUST_DECREASE_UNIT + "</br>");
+				out.println("Trust penalty = " + Parameters.TRUST_PENALTY + "</br>");
+				out.println("Trust recovery parameter = " + Parameters.LAMBDA + "</br>");
+			}	
+			
+			out.println("</br>");
+			
+			int mSize = maliciousAgents.size();
 			String message = mSize == 0 ? "There are no malicious agents. "
 					: (mSize == 1) ? "There is 1 malicious agent: " : "There are " + mSize + " malicious agents: ";
 			
-			out.println(message + (mSize > 0 ? malicious : "") + "</br>");
+			out.println("<font color=\"red\">" + message + (mSize > 0 ? maliciousAgents : "") +"</font>" + "</br></br>");
 			
-			String table = "<table> " +
-					
+			out.println("<h2>Statistics</h2> </br></br>");
+			
+			StringBuilder deliveredPc = new StringBuilder();
+			Formatter formatter = new Formatter(deliveredPc);			
+			formatter.format("%.2f", computeDeliveredPercentage());
+			
+			StringBuilder fsVol = new StringBuilder();
+			formatter  = new Formatter(fsVol, Locale.US);
+			formatter.format("%,d", totalFramesSentVolume);
+			
+			StringBuilder frVol = new StringBuilder();
+			formatter  = new Formatter(frVol, Locale.US);
+			formatter.format("%,d", totalFramesReceivedVolume);
+			
+			String table = "<table> " +					
 					"<tr> <td> Sent measures </td>" + "<td>" + getTotalMeasuresSent() + "</td></tr>" +
 					"<tr> <td> Received measures </td>" + "<td>" + getTotalMeasuresReceived() + "</td></tr>" +
-					"<tr> <td> Lost percentage </td>" + "<td>" + computeLostPercentage() + " %&nbsp</td></tr>" +
-					"<tr> <td>  </td> <td> </td></tr>" +
+					"<tr> <td> Delivered percentage </td>" + "<td>" + deliveredPc + " %&nbsp</td></tr>" +
 					"<tr> <td> Sent frames </td>" + "<td>" + totalFramesSent + " </td></tr>" +
 					"<tr> <td> Received frames </td>" + "<td>" + totalFramesReceived + "</td></tr>" +
-					
-					"</table>";
-			
-			
-			String trustTable = "<table> ";
-			
-			
-			Set<Entry<Integer,Map<Integer,Float>>> entries = neighbourTrust.entrySet();
-			for(Entry<Integer,Map<Integer,Float>> e : entries ){
-				trustTable += "<tr> " + "<td> " + e.getKey() + " </td>" + "<td>" + e.getValue().toString() + "</td></tr>" ;
-			} 
-			trustTable += "</table>";
-			
+					"<tr> <td> Volume of sent frames </td>" + "<td>" + fsVol + " </td></tr>" +
+					"<tr> <td> Volume of received frames </td>" + "<td>" + frVol + "</td></tr>" +
+					"<tr> <td> Corrupted route events </td>" + "<td>" + numCorruptedRouteEvents + "</td></tr>" +
+					"<tr> <td> Unauthorized message events </td>" + "<td>" + unauthorizedMessages + "</td></tr>" +
+					"</table>";			
 			out.println(table);
-			out.println("</br> Modified trust values: </br> ");
-			out.println(trustTable);
-			
 			out.println("</br>");
-			out.println("Distrust map </ br>" + distrustMap);
 			
-			// out.println("</br> Measures: </br> ");
-			// List<String> measures = agentReceivedMeasures.get(1);
-			// Collections.sort(measures);
-			// for(String m : measures)
-			//	out.println(m + " </br>");
+			
+			
+			if (Parameters.USE_TRUST) {
+				String trustTable = "<table> ";			
+				Set<Entry<Integer,Map<Integer,Float>>> entries = neighbourTrust.entrySet();
+				for(Entry<Integer,Map<Integer,Float>> e : entries ){
+					trustTable += "<tr> " + "<td> " + e.getKey() + " </td>" + "<td>" + e.getValue().toString() + "</td></tr>" ;
+				} 
+				
+				trustTable += "</table>";
+				
+				out.println("</br> Modified trust values: </br> ");
+				out.println(trustTable);
+
+				out.println("</br>");
+				out.println("Distrust map </ br>" + distrustMap);
+			}
+			
+			
+			
 			out.println("</html>");
 			out.close();
+			System.out.print("Report file written [ " + outputFilename + " ]. ");
 		}
 	}
 

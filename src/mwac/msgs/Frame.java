@@ -57,6 +57,10 @@ public class Frame implements Serializable{
 	public Message getMessage() {
 		return message;
 	}
+	
+	public int getVolume(){
+		return message.getVolume() + 8;
+	}
 
 	public boolean isSenderSet(){
 		return sender > 0;	

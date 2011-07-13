@@ -51,6 +51,7 @@ public class Scenario {
 
 		return null;
 	}
+	
 	private static String getFinalConfigFilename(String fileName){
 		String tmp  = String.copyValueOf(fileName.toCharArray());
 		return "output/" + tmp.substring(tmp.indexOf("/") + 1, tmp.indexOf(".")) + "_f.xml";		
@@ -175,11 +176,9 @@ public class Scenario {
 	public List<Integer> getRandomIds(int num, Role role){
 		List<Integer> ids = new ArrayList<Integer>();
 
-		/*
-		 * TESTING STUFF
-		 * ids.add(3);
-		 * return ids;
-		 */
+		//  TODO TESTING .. 
+		// ids.add(8);  return ids;
+		 
 		
 		ids = organization.getIdsWithRole(role, workstationId, true);
 
@@ -197,7 +196,7 @@ public class Scenario {
 				organization.setMalicious(r, true);
 			return randNum;
 		}
-		
+	
 	}
 	
 	public int getWorkstationId() {

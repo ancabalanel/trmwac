@@ -35,6 +35,10 @@ public class MRouteRequest extends Message{
 	public int getRequestId() {
 		return requestId;
 	}
+	
+	public int getVolume(){
+		return super.getVolume() + 4 + 4 * route.size();
+	}
 
 	public void setRequestId(int requestId) {
 		this.requestId = requestId;

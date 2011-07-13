@@ -25,6 +25,10 @@ public abstract class Message implements Serializable{
 		return source;
 	}
 
+	public int getVolume(){
+		return 8; // source size + destination size
+	}
+	
 	public void setSource(int source) {
 		this.source = source;
 	}

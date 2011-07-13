@@ -24,6 +24,10 @@ public class MWarning extends Message {
 	public void setSuspect(int suspect) {
 		this.suspect = suspect;
 	}
+	
+	public int getVolume(){
+		return super.getVolume() + 4;
+	}
 
 	@Override
 	public String toString() {

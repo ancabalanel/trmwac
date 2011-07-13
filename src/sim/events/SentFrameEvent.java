@@ -5,13 +5,13 @@ package sim.events;
 
 /**
  * @author Anca
- *
+ * 
  */
 @SuppressWarnings("serial")
-public class ReceivedFrameEvent extends Event {
+public class SentFrameEvent extends Event {
 	int volume;
-	
-	public ReceivedFrameEvent(int source, int volume) {
+
+	public SentFrameEvent(int source, int volume) {
 		super(source);
 		this.volume = volume;
 	}
@@ -23,6 +23,6 @@ public class ReceivedFrameEvent extends Event {
 	public void setVolume(int volume) {
 		this.volume = volume;
 	}
-	
 
+	
 }
