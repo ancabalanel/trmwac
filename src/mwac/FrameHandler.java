@@ -19,8 +19,10 @@ import sim.Sensor;
 import sim.behaviours.WatchListRemoverBehaviour;
 import sim.eval.Parameters;
 import sim.events.CorruptedRouteEvent;
+import sim.events.DistrustNeighbourEvent;
 import sim.events.ReceivedFrameEvent;
 import sim.events.ReceivedMeasureEvent;
+import sim.events.TrustDecreasedEvent;
 import sim.events.UnauthorizedMessageEvent;
 
 // TODO ** = revise
@@ -452,8 +454,15 @@ public class FrameHandler {
 			
 			Role suspectRole = agent.getNeighbourRole(suspect);		
 			
-			if(agent.hasNeighbour(suspect))
+			if(agent.hasNeighbour(suspect) && agent.getNeighbourTrust(suspect) > Parameters.TRUST_THRESHOLD){
+				agent.DEBUG("Warned about ... " + suspect);
 				agent.modifyTrust(suspect, -Parameters.TRUST_PENALTY);
+				NeighbourTrust nb = new NeighbourTrust(suspect, agent.getNeighbourTrust(suspect));
+				
+				agent.sendNotification(new TrustDecreasedEvent(agent.getId(), nb));
+				if(agent.getNeighbourTrust(suspect) < Parameters.TRUST_THRESHOLD)
+					agent.sendNotification(new DistrustNeighbourEvent(agent.getId(), suspect));
+			}
 			
 			if(suspectRole == Role.Representative){				
 				if (agent.getNumTrustedRepresentatives() == 0 && agent.getSendMeasuresBehaviour() != null)

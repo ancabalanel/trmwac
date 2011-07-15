@@ -85,6 +85,6 @@
 	<!-- The specification of attacks follows: -->
 	<!-- attack type="fabricate" num="1" role="Simple" issued="100" msgType="RouteRequest" total="3" interval="1000" /-->
 	<!-- attack type="nofwd" num="2" role="Link" issued="100" probDrop="0.9"/-->
-	<attack type="modify" num="1" role="Link" issued="0" msgType="RoutedData" probMod="1.0"/>
+	<!-- attack type="modify" num="1" role="Link" issued="0" msgType="RoutedData" probMod="1.0"/-->
 
 </scenario>

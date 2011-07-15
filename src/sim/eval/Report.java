@@ -174,7 +174,7 @@ public class Report {
 			out.println("Using trust: " + Parameters.USE_TRUST + " </br>");
 			
 			if(Parameters.USE_TRUST){
-				out.println("Watch time = " + Parameters.WATCH_TIME + " ms + </br>");
+				out.println("Watch time = " + Parameters.WATCH_TIME + " ms </br>");
 				out.println("Trust threshold = " + Parameters.TRUST_THRESHOLD + "</br>");
 				out.println("Trust decrease unit = " + Parameters.TRUST_DECREASE_UNIT + "</br>");
 				out.println("Trust penalty = " + Parameters.TRUST_PENALTY + "</br>");

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+	<organization stable="true">
+		<node id="1" x="145" y="115" range="30" role=" Representative" />
+		<node id="2" x="163" y="107" range="30" role=" Link">
+			<group id="1" />
+			<group id="3" />
+		</node>
+		<node id="3" x="172" y="135" range="30" role=" Representative" />
+		<node id="4" x="145" y="139" range="30" role=" Link">
+			<group id="3" />
+			<group id="1" />
+		</node>
+		<node id="5" x="160" y="135" range="30" role=" Link">
+			<group id="3" />
+			<group id="1" />
+		</node>
+		<node id="6" x="159" y="154" range="30" role=" Link">
+			<group id="3" />
+			<group id="12" />
+		</node>
+		<node id="7" x="174" y="154" range="30" role=" Link">
+			<group id="3" />
+			<group id="12" />
+		</node>
+		<node id="8" x="167" y="125" range="30" role=" Link">
+			<group id="3" />
+			<group id="1" />
+		</node>
+		<node id="9" x="177" y="110" range="30" role=" Simple">
+			<group id="3" />
+		</node>
+		<node id="10" x="183" y="127" range="30" role=" Simple">
+			<group id="3" />
+		</node>
+		<node id="11" x="185" y="144" range="30" role=" Link">
+			<group id="3" />
+			<group id="12" />
+		</node>
+		<node id="12" x="172" y="169" range="30" role=" Representative" />
+		<node id="13" x="187" y="167" range="30" role=" Simple">
+			<group id="12" />
+		</node>
+		<node id="14" x="199" y="141" range="30" role=" Simple">
+			<group id="3" />
+		</node>
+		<node id="15" x="196" y="122" range="30" role=" Simple">
+			<group id="3" />
+		</node>
+	</organization>
+
+	<workstation id="1" />
+	<!-- The default behaviour of nodes: -->
+	<measures id="*" total="5" interval="100" issued="0"/>
+	<!-- The specification of attacks follows: -->
+	<!-- attack type="fabricate" num="1" role="Simple" issued="2000" msgType="Data" total="5" interval="1000" /-->
+	<!-- attack type="nofwd" num="1" role="Representative" issued="200" probDrop="0.9"/ -->
+	<!-- attack type="modify" num="1" role="Representative" issued="2000" msgType="RouteReply" probMod="0.5"/-->
+
+</scenario>

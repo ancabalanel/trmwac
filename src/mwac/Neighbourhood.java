@@ -164,9 +164,6 @@ public class Neighbourhood {
 	public void setOwner(int owner) {
 		this.owner = owner;
 	}
-
-//	public static int favorTrusted(List<Neighbour> neighbours){
-//	}
 	
 	@Override
 	public String toString() {

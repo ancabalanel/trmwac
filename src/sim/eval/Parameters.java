@@ -19,34 +19,29 @@ public class Parameters {
 	
 	
 	/** After this delay from the last received message the simulation ends */
-	public static final long DELAY_BEFORE_SIMULATION_END = 11000;
+	public static final long DELAY_BEFORE_SIMULATION_END = 5000;
 	
 	/** Maximum simulation time */
-	public static final long MAX_SIMULATION_TIME = 300000;
-	
+	public static final long MAX_SIMULATION_TIME = 300000;	
 	
 	
 	/** All honest agents use/don't use authorization */
-	public static boolean USE_AUTHORIZATION = false;
-	
+	public static boolean USE_AUTHORIZATION = false;	
 	
 	/** All honest agents use/don't use trust based decisions */
-	public static boolean USE_TRUST = true;
+	public static boolean USE_TRUST = false;
+	
 		
 	/** Trust threshold */
 	public final static float TRUST_THRESHOLD = 0.9f;
-
 	/** Trust recovery parameter */
-	public static final float LAMBDA = 0.1f;
-	
+	public static final float LAMBDA = 0.01f;	
 	/** Default time (ms) to listen to a message */
-	public static final long WATCH_TIME = 10000;
-
+	public static final long WATCH_TIME = 5000;
 	/** Trust decrease step */
-	public static final float TRUST_DECREASE_UNIT = 0.11f;
-	
+	public static final float TRUST_DECREASE_UNIT = 0.11f;	
 	/** Penalty given to a neighbour upon receiving a warning about it */	
-	public static final float TRUST_PENALTY = 0.051f;
+	public static final float TRUST_PENALTY = 0.11f;
 	
 	
 	// other

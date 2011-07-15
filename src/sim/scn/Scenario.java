@@ -177,10 +177,10 @@ public class Scenario {
 		List<Integer> ids = new ArrayList<Integer>();
 
 		//  TODO TESTING .. 
-		// ids.add(8);  return ids;
+		ids.add(9);  return ids;
 		 
 		
-		ids = organization.getIdsWithRole(role, workstationId, true);
+		/*ids = organization.getIdsWithRole(role, workstationId, true);
 
 		if (ids.size() < num){
 			for(Integer i : ids)
@@ -195,7 +195,7 @@ public class Scenario {
 			for(Integer r : randNum)
 				organization.setMalicious(r, true);
 			return randNum;
-		}
+		}*/
 	
 	}
 	
