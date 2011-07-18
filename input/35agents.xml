@@ -129,7 +129,7 @@
 	<measures id="*" total="10" interval="1000" issued="0"/>
 	<!-- The specification of attacks follows: -->
 	<!-- attack type="fabricate" num="1" role="Representative" issued="1000" msgType="RoutedData" total="5" interval="1000" /-->	
-	<attack type="nofwd" num="1" role="Representative" issued="200" probDrop="1.0"/>	
+	<!-- attack type="nofwd" num="1" role="Representative" issued="200" probDrop="1.0"/-->	
 	<!-- attack type="modify" num="1" role="Representative" issued="0" msgType="RouteRequest" probMod="1.0"/-->
 
 </scenario>
