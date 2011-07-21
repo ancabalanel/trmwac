@@ -26,7 +26,7 @@ public class Parameters {
 	
 	
 	/** All honest agents use/don't use authorization */
-	public static boolean USE_AUTHORIZATION = false;	
+	public static boolean USE_AUTHORIZATION = true;	
 	
 	/** All honest agents use/don't use trust based decisions */
 	public static boolean USE_TRUST = false;
@@ -37,7 +37,7 @@ public class Parameters {
 	/** Trust recovery parameter */
 	public static final float LAMBDA = 0.01f;	
 	/** Default time (ms) to listen to a message */
-	public static final long WATCH_TIME = 5000;
+	public static final long WATCH_TIME = 25000;
 	/** Trust decrease step */
 	public static final float TRUST_DECREASE_UNIT = 0.11f;	
 	/** Penalty given to a neighbour upon receiving a warning about it */	
@@ -69,22 +69,27 @@ public class Parameters {
 	}
 	
 	public static Neighbour chooseTrustedNeighbour(List<Neighbour> neighbours){
-		if(neighbours.isEmpty())
+		List<Neighbour> trustedNeighbours = new ArrayList<Neighbour>();
+		for(Neighbour n : neighbours)
+			if(n.getTrust() > Parameters.TRUST_THRESHOLD)
+				trustedNeighbours.add(n);
+		
+		if(trustedNeighbours.isEmpty())
 			return null;		
 		else{
-			if (neighbours.size() == 1)
+			if (trustedNeighbours.size() == 1)
 				return neighbours.get(0);
 			else {
-				Collections.sort(neighbours);
+				Collections.sort(trustedNeighbours);
 				float sum = 0.0f;
-				for(Neighbour n : neighbours)
+				for(Neighbour n : trustedNeighbours)
 					sum += n.getTrust();
 				
 				List<Float> intervals = new ArrayList<Float>();
 				intervals.add(0.0f);
 				
 				float sumI = 0.0f;
-				for(Neighbour n : neighbours){
+				for(Neighbour n : trustedNeighbours){
 					sumI +=  n.getTrust()/sum;
 					intervals.add(sumI);
 				}
@@ -94,7 +99,7 @@ public class Parameters {
 					float f1 = intervals.get(i);
 					float f2 = intervals.get(i+1);
 					if (f1 < db && f2 > db)
-						return neighbours.get(i);
+						return trustedNeighbours.get(i);
 				}
 			}
 			return null;

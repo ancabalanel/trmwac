@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import mwac.Groups;
+import mwac.Neighbour;
 import mwac.Neighbourhood;
 import mwac.Role;
 import mwac.RoutingManager;
@@ -248,7 +249,12 @@ public class Sensor extends Agent {
 	}
 	public void sendFrame(Frame frame){
 		ACLMessage aclMessage = new ACLMessage(ACLMessage.PROPAGATE);
-		aclMessage.addReceiver(simAgentAID);
+		
+		List<Neighbour> receivers = neighbourhood.getNeighbours();
+		
+		for (Neighbour nb : receivers)
+			aclMessage.addReceiver((new AID(nb.getId() + "", AID.ISLOCALNAME)));
+
 		if (frame != null) {
 			try {
 				aclMessage.setContentObject(frame);

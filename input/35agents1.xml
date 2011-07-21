@@ -124,10 +124,10 @@
 
 	<workstation id="1" />
 	<!-- The default behaviour of nodes: -->
-	<measures id="*" total="5" interval="100" issued="0"/>
+	<measures id="*" total="5" interval="30000" issued="0"/>
 	<!-- The specification of attacks follows: -->
 	<!-- attack type="fabricate" num="1" role="Simple" issued="2000" msgType="Data" total="5" interval="1000" /-->
-	<attack type="nofwd" num="1" role="Representative" issued="200" probDrop="1.0"/>
+	<attack type="nofwd" num="1" role="Representative" issued="0" probDrop="1.0"/>
 	<!-- attack type="modify" num="1" role="Representative" issued="2000" msgType="RouteReply" probMod="0.5"/-->
 
 </scenario>

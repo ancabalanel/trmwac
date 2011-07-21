@@ -245,12 +245,13 @@ public class Simulation extends Agent {
 				// END SIMULATION
 				long crtTime = System.currentTimeMillis();
 				if (crtTime > dateLastNotification + Parameters.DELAY_BEFORE_SIMULATION_END
-						|| crtTime > dateLastDispatch + Parameters.DELAY_BEFORE_SIMULATION_END 
+					//	|| crtTime > dateLastDispatch + Parameters.DELAY_BEFORE_SIMULATION_END 
 						|| crtTime > simulationStart + Parameters.MAX_SIMULATION_TIME) {
 					if(!reportClosed){
 						report.close();
 						reportClosed = true;
 						System.out.println("Bye!");
+						java.awt.Toolkit.getDefaultToolkit().beep();
 						System.exit(0);
 					}					
 				}

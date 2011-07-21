@@ -48,9 +48,10 @@ public class SendPeriodicMeasures extends TickerBehaviour {
 			} else {
 				// For representatives:
 				if (agent.getRole() == Role.Representative) {
-
+				
 					// if i have a route
 					if (agent.hasRoute(destination)) { 
+						// agent.DEBUG("I have route"); // this should not appear...
 						List<Integer> route = agent.getRoutingInfo(destination).getRoute();
 						int repDestination = agent.getRoutingInfo(destination).getRepDest();
 						MRoutedData rdata = new MRoutedData(agent.getId(), repDestination, mdata, route);

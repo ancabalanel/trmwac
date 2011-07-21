@@ -1,0 +1,89 @@
+
+	// !!! TODO - set this to a real path
+	private String orgXMLfilename = ".....\\demo.xml";
+	
+	/**
+	 * Writes the current organization info into an XML file
+	 * @param fileName
+	 */
+	public void configToXML() {
+
+		String indent = "\t";
+
+		try {
+			PrintWriter pw = new PrintWriter(new File(orgXMLfilename));
+
+			pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+			pw.println("<scenario>");
+			pw.println(indent + "<organization stable=\"true\">");
+
+			// print nodes
+			
+			java.lang.Object[] o = this.itemList.getClonedList();
+			
+			for(java.lang.Object ob : o)
+			{
+				SimulatedObject obj = ((ObjectAndItsNeighboorhood)ob).getSimulatedObject();				
+				
+				
+				int x = obj.getPosition().x;
+				int y = obj.getPosition().y;
+				
+				if (obj.getObject() instanceof MWACAgent) {
+					MWACAgent mwacAgent = (MWACAgent) obj.getObject();			
+					
+					
+					int id = mwacAgent.getUserId();					
+					int range = mwacAgent.getRange();
+					byte role = mwacAgent.getRole();			
+					
+					
+					String roleStr = "None";
+					switch(role){
+					case MWACAgent.roleSIMPLEMEMBER: roleStr = "Simple"; break;
+					case MWACAgent.roleLINK: roleStr = "Link"; break;
+					case MWACAgent.roleREPRESENTATIVE: roleStr = "Representative"; break;
+					default: roleStr ="None";
+					}
+					
+					pw.print(indent + indent + "<node id=\"" + id + "\" x=\""
+							+ x + "\" y=\"" + y + "\" range=\"" + range
+							+ "\" role=\"" + roleStr + "\"");
+					
+					if (role == MWACAgent.roleREPRESENTATIVE)
+						pw.println(" />");
+					else{
+						pw.println(">");
+												
+						int groups[] = mwacAgent.getGroups();
+						for(int i=0;i<groups.length;i++)
+							pw.println(indent + indent + indent + "<group id=\"" + groups[i] + "\" />");
+						pw.println(indent + indent + "</node>");
+					}			
+					
+				}
+				
+			}
+
+			pw.println(indent + "</organization>");
+			
+			String activity ="\n" + 
+			indent + "<workstation id=\"1\" />\n" + 
+			indent + "<!-- The default behaviour of nodes: -->\n" + 
+			indent + "<measures id=\"*\" total=\"5\" interval=\"100\" issued=\"0\"/>\n" + 
+			indent + "<!-- The specification of attacks follows: -->\n" +
+			indent + "<!-- attack type=\"fabricate\" num=\"1\" role=\"Simple\" issued=\"2000\" msgType=\"Data\" total=\"5\" interval=\"1000\" /-->\n" +
+			indent + "<!-- attack type=\"nofwd\" num=\"1\" role=\"Representative\" issued=\"200\" probDrop=\"0.9\"/ -->\n" + 
+			indent + "<!-- attack type=\"modify\" num=\"1\" role=\"Representative\" issued=\"2000\" msgType=\"RouteReply\" probMod=\"0.5\"/-->\n";
+			
+			pw.println(activity);
+			pw.println("</scenario>");
+
+			pw.close();
+			System.out.println("XML Written");
+
+		} catch (FileNotFoundException e) {
+
+			e.printStackTrace();
+		}
+	}

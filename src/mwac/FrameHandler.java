@@ -149,7 +149,9 @@ public class FrameHandler {
 
 		if (agent.getRole() == Role.Representative){ 
 			try {
+				
 				relay = agent.getLinkToRepresentative(relay);
+				
 			} catch (Exception e) {
 				if(agent.usesAuthorization())
 					agent.sendNotification(new UnauthorizedMessageEvent(agent.getId(), rdata.getClass().getName(), rdata.getSource(), fSender));
@@ -377,10 +379,11 @@ public class FrameHandler {
 				if (agent.hasRoute(finalDest)) { // If I had a route
 					List<Integer> oldRoute = agent.getRoutingInfo(finalDest).getRoute();
 					if (route.size() < oldRoute.size()) // ... if the old route was longer, replace it
+						//					;
 						agent.addRoute(finalDest, rrep.getSource(), route);
 				} else { // If i had no route, add the new route
+					//;
 					agent.addRoute(finalDest, rrep.getSource(), route);
-					
 				}
 				
 				// If the message was not sent already...
@@ -449,7 +452,6 @@ public class FrameHandler {
 	private void handleMessageWarning(MWarning warn){
 		if(agent.isUsingTrust()){
 		
-			//agent.DEBUG("Received warning  " + warn);			
 			int suspect = warn.getSuspect();
 			
 			Role suspectRole = agent.getNeighbourRole(suspect);		
@@ -460,6 +462,8 @@ public class FrameHandler {
 				NeighbourTrust nb = new NeighbourTrust(suspect, agent.getNeighbourTrust(suspect));
 				
 				agent.sendNotification(new TrustDecreasedEvent(agent.getId(), nb));
+				agent.warnNeighbours(suspect);
+				
 				if(agent.getNeighbourTrust(suspect) < Parameters.TRUST_THRESHOLD)
 					agent.sendNotification(new DistrustNeighbourEvent(agent.getId(), suspect));
 			}

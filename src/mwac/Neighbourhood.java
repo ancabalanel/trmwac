@@ -56,9 +56,13 @@ public class Neighbourhood {
 			if (n.getGroups().contains(repId))
 				allLinksToRep.add(n);
 		}
+
 		Neighbour selected = Parameters.chooseTrustedNeighbour(allLinksToRep);
-		if (selected!=null)
+		
+		if (selected!=null) {
+			
 			return selected.id;
+		}
 		else
 			return -1;
 		

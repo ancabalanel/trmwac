@@ -1,3 +1,128 @@
 TR MWAC - Trusted Routing MWAC
+- wireless sensor network routing
 
-Implementation of a wireless sensor network simulation. 
+This project was developped in Eclipse (Helios Service Release 2), and uses Jade (agent framework). 
+The Jade libraries are found in the /lib folder of the project.
+
+
+Input files
+===========
+To set up the simulation, you should have an .xml input file,
+containing the specification of the topology and organizational structure.
+The /input folder contains several input files (12agents.xml, 25agents.xml etc)
+
+If you want to obtain an .xml file from MASH:
+ 0. You need MASH (not included here)
+ 1. In the  "simulation.multiagentSyste.MAS" class
+ 		- Define the String orgXMLfilename = "path-to-the-input-file-you-want-to-create";
+ 		- Add the configToXML() method (can be found in "configToXML.txt" file)
+ 2.In the default package, WDMainWindow.java class
+ 	- look for "TST"; modify the action for the "test" button in MASH GUI, like this:
+ 			
+ 			/* Test */
+ 			if (WDTouche.equals("TST")) 
+ 				this.mas.configToXML();   
+ 				
+ 3. Run MASH, create the network and when you are ready to save the organization, click Debug -> test.
+ 	- the demo.xml file should appear in the location you specified 
+ 
+Setting simulation parameters
+=============================
+
+- Edit the Parameters.java file, found in sim.eval package (/src folder):
+
+	specify the desired values for the parameters:
+	USE_AUTHORIZATION
+	USE_TRUST
+	WATCH_TIME
+	etc.
+
+- In the current version, the attackers are selected randomly, in the Scenario.java class (package sim.scn), 
+using the method:
+
+	public List<Integer> getRandomIds(int num, Role role);
+		
+		- You may follow the comment/uncomment indications in the source
+		 in order to manually set the attackers.
+ 
+ 
+Customize the scenario
+======================
+
+In the demo.xml file:
+
+Set the workstation id
+----------------------
+- default is 1  
+
+Specify the default behaviour of nodes 
+---------------------------------------
+
+<!-- The default behaviour of nodes: sending measures -->	
+<measures id="*" total="15" interval="100" issued="0"/>
+id - * = all nodes / a node id 
+
+total - total number of measurements sent by each node
+interval - time (milliseconds) between measurements
+
+!! IMPORTANT: If the USE_TRUST is true, this interval should be greater than the WATCH_TIME set in the Parameters.java file
+
+issued - time when the instruction is issued (millseconds from the beginning of the simulation)
+
+Specify attacks (if any) 
+------------------------
+
+<!-- attack type="nofwd" num="2" role="Link" issued="10" probDrop="0.5"/-->
+
+- num = total number of attackers
+- role - role of the attacker(s)
+- to use only with role "Link" and "Representative"
+- issued - same as above
+- probDrop - probability of message drop
+
+<!-- attack type="fabricate" num="1" role="Representative" issued="100" msgType="RoutedData" total="5" interval="100" /-->
+- num, issued, role - same as above
+- no role restrictrions
+- msgType - one of "RouteRequest", "RouteReply", "RoutedData" or "Data"
+- total - total messages fabricated by each attacker
+- interval - interval at which fabricated messages are sent
+ 	
+<!-- attack type="modify" num="2" role="Representative" issued="100" msgType="Data" probMod="0.9"/-->
+ - similar to "nofwd"
+ - msgType - same as above
+  
+ 
+Output files
+------------
+
+The output will be written in the form of an .html file, in the /output folder.
+
+If you want to have an image of the topology in the output file, you need to make a screenshot of the 
+organization obtained in MASH, and save it in the /images folder, with the same name as the input, 
+and a .png extension.
+
+Example:
+
+input file: demo.xml
+image file: demo.png
+resulting output file: demo-#.html
+
+# is the simulation count, which is saved in count.txt and incremented each time a simulation is run.
+You can reset it anytime you want.
+  
+Running the simulation
+----------------------
+The default launch configuration is demo.launch, found in the root of the project folder. 
+Here is what happens:
+
+- Jade platform is started (main clas: jade.Boot3)
+
+- a Simulation agent is created:
+	- program arguments: -host localhost SIM:sim.Simulation("input/demo.xml") 
+
+The only parameter of the simulation agent is the input .xml filename, which you may change.
+
+
+
+ 
+ 
